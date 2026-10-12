@@ -18,17 +18,39 @@ EvoCare adalah platform (MVP) berbasis **Laravel** untuk mengelola dan menemukan
 ## Persyaratan
 PHP ≥ 8.3 (dengan ekstensi pdo_sqlite), Composer, Node.js + npm.
 
-## Instalasi
-```bash
-composer install
-cp .env.example .env        # lewati jika .env sudah ada
-php artisan key:generate
-touch database/database.sqlite
-php artisan migrate:fresh --seed
-npm install && npm run build
-php artisan serve
+## Instalasi (MAMP / MySQL)
+1. Jalankan **MAMP** (Apache port 8888, MySQL port **8889**, user `root` / password `root`).
+2. Buat database `evocare` (sekali saja), lewat phpMyAdmin di **http://localhost:8888/phpMyAdmin5/** atau terminal:
+   ```bash
+   /Applications/MAMP/Library/bin/mysql80/bin/mysql -h127.0.0.1 -P8889 -uroot -proot \
+     -e "CREATE DATABASE IF NOT EXISTS evocare CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+   ```
+3. Siapkan aplikasi:
+   ```bash
+   composer install
+   cp .env.example .env        # lewati jika .env sudah ada
+   php artisan key:generate
+   php artisan config:clear
+   php artisan migrate --seed  # HANYA untuk database yang masih kosong
+   php artisan storage:link
+   npm install && npm run build
+   php artisan serve
+   ```
+   Buka http://127.0.0.1:8000
+
+Konfigurasi database di `.env`:
 ```
-Buka http://127.0.0.1:8000
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=8889
+DB_DATABASE=evocare
+DB_USERNAME=root
+DB_PASSWORD=root
+```
+
+> **PERINGATAN:** jangan jalankan `php artisan migrate:fresh`, `migrate:refresh`, `migrate:reset`, atau `db:wipe` pada database MySQL ini. Perintah tersebut **menghapus semua data** (termasuk akun yang sudah dibuat). Untuk perubahan struktur cukup buat migration baru lalu `php artisan migrate`.
+>
+> File lama `database/database.sqlite` disimpan sebagai cadangan dan tidak dipakai lagi.
 
 ## Akun Demo (kata sandi semua: `password`)
 | Peran | Email |
@@ -45,6 +67,7 @@ Tips demo kuota: kegiatan **"Posko Tanggap Banjir"** hanya berkuota 3 dan sudah 
 ```bash
 php artisan test
 ```
+Test selalu memakai SQLite in-memory (`phpunit.xml`, dengan `force="true"`), sehingga **tidak menyentuh database MySQL**. `tests/TestCase.php` juga menghentikan test jika koneksi bukan SQLite `:memory:`.
 Mencakup: autentikasi (Breeze), otorisasi peran & policy, pencarian & filter, pendaftaran (kuota, duplikat, pembatalan), CRUD kegiatan, dan seeder. Test khusus EvoCare ada di `tests/Feature/EvoCareTest.php`.
 
 ## Struktur Penting
