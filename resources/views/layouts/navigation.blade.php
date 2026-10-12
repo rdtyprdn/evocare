@@ -1,0 +1,46 @@
+<nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center gap-8">
+                <a href="{{ route('home') }}" class="text-2xl font-bold text-orange-600">Evo<span class="text-gray-800">Care</span></a>
+                <div class="hidden sm:flex gap-6 text-sm font-medium">
+                    <a href="{{ route('home') }}" class="hover:text-orange-600 {{ request()->routeIs('home') ? 'text-orange-600' : '' }}">Jelajahi Kegiatan</a>
+                    @auth
+                        <a href="{{ route('registrations.index') }}" class="hover:text-orange-600 {{ request()->routeIs('registrations.*') ? 'text-orange-600' : '' }}">Pendaftaran Saya</a>
+                        @if (in_array(Auth::user()->role, ['organizer', 'admin']))
+                            <a href="{{ route('organizer.events.index') }}" class="hover:text-orange-600 {{ request()->routeIs('organizer.*') ? 'text-orange-600' : '' }}">Dashboard Penyelenggara</a>
+                        @endif
+                        @if (Auth::user()->isAdmin())
+                            <a href="{{ route('admin.categories.index') }}" class="hover:text-orange-600 {{ request()->routeIs('admin.*') ? 'text-orange-600' : '' }}">Admin</a>
+                        @endif
+                    @endauth
+                </div>
+            </div>
+            <div class="hidden sm:flex items-center gap-4 text-sm">
+                @auth
+                    <a href="{{ route('profile.edit') }}" class="text-gray-600 hover:text-gray-900">{{ Auth::user()->name }} <span class="text-xs text-gray-400">({{ Auth::user()->role }})</span></a>
+                    <form method="POST" action="{{ route('logout') }}">@csrf<button class="text-gray-600 hover:text-red-600">Keluar</button></form>
+                @else
+                    <a href="{{ route('login') }}" class="text-gray-600 hover:text-gray-900">Masuk</a>
+                    <a href="{{ route('register') }}" class="rounded-md bg-orange-600 px-4 py-2 text-white hover:bg-orange-700">Daftar</a>
+                @endauth
+            </div>
+            <div class="flex items-center sm:hidden">
+                <button @click="open = ! open" class="p-2 text-gray-500">☰</button>
+            </div>
+        </div>
+    </div>
+    <div x-show="open" class="sm:hidden border-t px-4 py-3 space-y-2 text-sm">
+        <a class="block" href="{{ route('home') }}">Jelajahi Kegiatan</a>
+        @auth
+            <a class="block" href="{{ route('registrations.index') }}">Pendaftaran Saya</a>
+            @if (in_array(Auth::user()->role, ['organizer', 'admin']))<a class="block" href="{{ route('organizer.events.index') }}">Dashboard Penyelenggara</a>@endif
+            @if (Auth::user()->isAdmin())<a class="block" href="{{ route('admin.categories.index') }}">Admin</a>@endif
+            <a class="block" href="{{ route('profile.edit') }}">Profil</a>
+            <form method="POST" action="{{ route('logout') }}">@csrf<button>Keluar</button></form>
+        @else
+            <a class="block" href="{{ route('login') }}">Masuk</a>
+            <a class="block" href="{{ route('register') }}">Daftar</a>
+        @endauth
+    </div>
+</nav>
