@@ -18,6 +18,8 @@ class User extends Authenticatable
 
     public const ROLES = ['admin', 'organizer', 'user'];
 
+    public const ROLE_LABELS = ['admin' => 'Admin', 'organizer' => 'Penyelenggara', 'user' => 'Pengguna'];
+
     protected $attributes = ['role' => 'user'];
 
     protected function casts(): array

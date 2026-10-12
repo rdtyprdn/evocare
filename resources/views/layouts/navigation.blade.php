@@ -18,7 +18,7 @@
             </div>
             <div class="hidden sm:flex items-center gap-4 text-sm">
                 @auth
-                    <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 text-gray-600 hover:text-gray-900"><x-avatar :user="Auth::user()" class="w-8 h-8 text-xs" />{{ Auth::user()->name }} <span class="text-xs text-gray-400">({{ Auth::user()->role }})</span></a>
+                    <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 text-gray-600 hover:text-gray-900"><x-avatar :user="Auth::user()" class="w-8 h-8 text-xs" />{{ Auth::user()->name }} <span class="text-xs text-gray-400">({{ \App\Models\User::ROLE_LABELS[Auth::user()->role] ?? Auth::user()->role }})</span></a>
                     <form method="POST" action="{{ route('logout') }}">@csrf<button class="text-gray-600 hover:text-red-600">Keluar</button></form>
                 @else
                     <a href="{{ route('login') }}" class="text-gray-600 hover:text-gray-900">Masuk</a>
