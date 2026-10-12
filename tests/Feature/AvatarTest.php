@@ -111,11 +111,11 @@ class AvatarTest extends TestCase
             ->assertRedirect(route('profile.edit'));
 
         $this->actingAs($user)->get(route('profile.edit'))
-            ->assertSee('Foto profil diperbarui.')->assertDontSee('Ukuran file terlalu besar');
+            ->assertSee('Foto profil diperbarui.')->assertSee('error: null', false); // error server tidak di-set
 
         // Walau URL masih membawa query, flash sukses menyembunyikan error.
         $this->actingAs($user)->withSession(['status' => 'avatar-updated'])
-            ->get(route('profile.edit').'?upload_error=too_large')->assertDontSee('Ukuran file terlalu besar');
+            ->get(route('profile.edit').'?upload_error=too_large')->assertSee('error: null', false);
     }
 
     public function test_avatar_form_action_has_no_query_string(): void
