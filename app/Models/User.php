@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role', 'organization_id'])]
+#[Fillable(['name', 'email', 'password', 'role', 'organization_id', 'avatar_path'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -41,6 +41,17 @@ class User extends Authenticatable
     public function events()
     {
         return $this->hasMany(Event::class);
+    }
+
+    public function avatarUrl(): ?string
+    {
+        return $this->avatar_path ? asset('storage/'.$this->avatar_path) : null;
+    }
+
+    public function initials(): string
+    {
+        return collect(preg_split('/\s+/', trim($this->name)))->filter()->take(2)
+            ->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('') ?: '?';
     }
 
     public function isAdmin(): bool

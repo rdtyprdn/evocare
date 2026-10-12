@@ -18,7 +18,7 @@
             </div>
             <div class="hidden sm:flex items-center gap-4 text-sm">
                 @auth
-                    <a href="{{ route('profile.edit') }}" class="text-gray-600 hover:text-gray-900">{{ Auth::user()->name }} <span class="text-xs text-gray-400">({{ Auth::user()->role }})</span></a>
+                    <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 text-gray-600 hover:text-gray-900"><x-avatar :user="Auth::user()" class="w-8 h-8 text-xs" />{{ Auth::user()->name }} <span class="text-xs text-gray-400">({{ Auth::user()->role }})</span></a>
                     <form method="POST" action="{{ route('logout') }}">@csrf<button class="text-gray-600 hover:text-red-600">Keluar</button></form>
                 @else
                     <a href="{{ route('login') }}" class="text-gray-600 hover:text-gray-900">Masuk</a>
@@ -33,6 +33,7 @@
     <div x-show="open" class="sm:hidden border-t px-4 py-3 space-y-2 text-sm">
         <a class="block" href="{{ route('home') }}">Jelajahi Kegiatan</a>
         @auth
+            <div class="flex items-center gap-3 pb-2 border-b"><x-avatar :user="Auth::user()" class="w-10 h-10 text-sm" /><div><div class="font-medium">{{ Auth::user()->name }}</div><div class="text-xs text-gray-500">{{ Auth::user()->email }}</div></div></div>
             <a class="block" href="{{ route('registrations.index') }}">Pendaftaran Saya</a>
             @if (in_array(Auth::user()->role, ['organizer', 'admin']))<a class="block" href="{{ route('organizer.events.index') }}">Dashboard Penyelenggara</a>@endif
             @if (Auth::user()->isAdmin())<a class="block" href="{{ route('admin.categories.index') }}">Admin</a>@endif

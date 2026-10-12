@@ -50,6 +50,10 @@ class ProfileController extends Controller
 
         Auth::logout();
 
+        if ($user->avatar_path) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar_path);
+        }
+
         $user->delete();
 
         $request->session()->invalidate();
