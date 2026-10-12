@@ -108,7 +108,7 @@ class AvatarTest extends TestCase
         $this->actingAs($user)
             ->from(route('profile.edit').'?upload_error=too_large')
             ->post(route('profile.avatar.update'), ['avatar' => UploadedFile::fake()->image('ok.jpg')])
-            ->assertRedirect(route('profile.edit').'#foto-profil');
+            ->assertRedirect(route('profile.edit'));
 
         $this->actingAs($user)->get(route('profile.edit'))
             ->assertSee('Foto profil diperbarui.')->assertSee('error: null', false); // error server tidak di-set
@@ -124,12 +124,12 @@ class AvatarTest extends TestCase
             ->assertSee('action="'.route('profile.avatar.update').'"', false);
     }
 
-    public function test_avatar_actions_redirect_to_photo_section_and_profile_name_has_no_autofocus(): void
+    public function test_avatar_actions_redirect_plainly_and_profile_name_has_no_autofocus(): void
     {
         $user = User::factory()->create();
         $this->actingAs($user)->post(route('profile.avatar.update'), ['avatar' => UploadedFile::fake()->image('a.jpg')])
-            ->assertRedirect(route('profile.edit').'#foto-profil');
-        $this->actingAs($user)->delete(route('profile.avatar.destroy'))->assertRedirect(route('profile.edit').'#foto-profil');
+            ->assertRedirect(route('profile.edit'));
+        $this->actingAs($user)->delete(route('profile.avatar.destroy'))->assertRedirect(route('profile.edit'));
 
         $html = $this->actingAs($user)->get(route('profile.edit'))->assertSee('id="foto-profil"', false)->getContent();
         $this->assertDoesNotMatchRegularExpression('/id="name"[^>]*autofocus/', $html);

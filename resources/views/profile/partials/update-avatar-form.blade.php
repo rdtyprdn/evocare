@@ -1,4 +1,4 @@
-<section id="foto-profil" class="scroll-mt-6" x-data="{
+<section id="foto-profil" x-data="{
         preview: null,
         error: @js(request('upload_error') === 'too_large' && ! session('status') && ! $errors->has('avatar') ? 'Ukuran file terlalu besar. Maksimal 2 MB.' : null),
         init() {
