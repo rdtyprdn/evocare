@@ -75,4 +75,26 @@ class AvatarTest extends TestCase
         $user = User::factory()->create(['name' => 'Raditya Pradana']);
         $this->actingAs($user)->get(route('profile.edit'))->assertSee('RP');
     }
+
+    public function test_post_too_large_redirects_back_with_indonesian_error(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user)
+            ->call('POST', route('profile.avatar.update'), [], [], [], [
+                'CONTENT_LENGTH' => 19 * 1024 * 1024,
+                'HTTP_REFERER' => route('profile.edit'),
+            ])
+            ->assertRedirect(route('profile.edit').'?upload_error=too_large');
+
+        $this->actingAs($user)->get(route('profile.edit').'?upload_error=too_large')
+            ->assertOk()->assertSee('Ukuran file terlalu besar. Maksimal 2 MB.');
+        $this->assertNull($user->refresh()->avatar_path);
+    }
+
+    public function test_post_too_large_json_returns_413(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->call('POST', route('profile.avatar.update'), [], [], [], ['CONTENT_LENGTH' => 19 * 1024 * 1024, 'HTTP_ACCEPT' => 'application/json'])
+            ->assertStatus(413)->assertJson(['message' => 'Ukuran file terlalu besar. Maksimal 2 MB.']);
+    }
 }
