@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AvatarController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\OrganizationController as AdminOrganizationController;
+use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
@@ -21,13 +23,20 @@ Route::middleware('auth')->group(function () {
     Route::get('/pendaftaran-saya', [RegistrationController::class, 'index'])->name('registrations.index');
     Route::delete('/pendaftaran/{registration}', [RegistrationController::class, 'destroy'])->name('registrations.destroy');
 
-    Route::middleware('role:organizer,admin')->prefix('penyelenggara')->name('organizer.')->group(function () {
+    Route::get('/penyelenggara/daftar', [OrganizationController::class, 'create'])->name('organizations.create');
+    Route::post('/penyelenggara/daftar', [OrganizationController::class, 'store'])->name('organizations.store');
+
+    // Akses per kegiatan diatur oleh EventPolicy; pembuatan kegiatan butuh organisasi terverifikasi.
+    Route::prefix('penyelenggara')->name('organizer.')->group(function () {
         Route::resource('events', OrganizerEventController::class)->except('show');
         Route::get('events/{event}/pendaftar', [OrganizerEventController::class, 'registrants'])->name('events.registrants');
     });
 
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
         Route::resource('categories', CategoryController::class)->only(['index', 'store', 'destroy']);
+        Route::get('organisasi', [AdminOrganizationController::class, 'index'])->name('organizations.index');
+        Route::post('organisasi/{organization}/verifikasi', [AdminOrganizationController::class, 'verify'])->name('organizations.verify');
+        Route::post('organisasi/{organization}/tolak', [AdminOrganizationController::class, 'reject'])->name('organizations.reject');
     });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

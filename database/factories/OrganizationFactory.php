@@ -11,6 +11,11 @@ class OrganizationFactory extends Factory
     {
         $name = 'Komunitas '.fake()->unique()->word();
 
-        return ['name' => $name, 'slug' => Str::slug($name).'-'.Str::lower(Str::random(4)), 'type' => 'komunitas', 'city' => 'Bandung'];
+        return ['name' => $name, 'slug' => Str::slug($name).'-'.Str::lower(Str::random(4)), 'type' => 'komunitas', 'city' => 'Bandung', 'status' => 'verified', 'verified_at' => now()];
+    }
+
+    public function pending(): static
+    {
+        return $this->state(['status' => 'pending', 'verified_at' => null]);
     }
 }

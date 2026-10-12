@@ -9,12 +9,13 @@ class EventPolicy
 {
     public function create(User $user): bool
     {
-        return in_array($user->role, ['organizer', 'admin'], true);
+        // Hanya pemilik/anggota organisasi yang sudah terverifikasi yang boleh membuat kegiatan.
+        return $user->hasVerifiedOrganization();
     }
 
     public function update(User $user, Event $event): bool
     {
-        return $user->isAdmin() || ($user->isOrganizer() && $event->user_id === $user->id);
+        return $user->isAdmin() || $event->user_id === $user->id;
     }
 
     public function delete(User $user, Event $event): bool

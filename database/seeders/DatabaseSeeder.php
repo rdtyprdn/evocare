@@ -32,7 +32,8 @@ class DatabaseSeeder extends Seeder
         $organizers = [];
         foreach ($orgs as [$name, $type, $city, $email, $person]) {
             $org = Organization::create(['name' => $name, 'slug' => Str::slug($name), 'type' => $type, 'city' => $city, 'description' => "$name bergerak di bidang pengabdian masyarakat di $city."]);
-            $organizers[] = User::create(['name' => $person, 'email' => $email, 'password' => 'password', 'role' => 'organizer', 'organization_id' => $org->id, 'email_verified_at' => now()]);
+            $organizers[] = $u = User::create(['name' => $person, 'email' => $email, 'password' => 'password', 'role' => 'organizer', 'organization_id' => $org->id, 'email_verified_at' => now()]);
+            $org->update(['owner_id' => $u->id, 'status' => 'verified', 'verified_at' => now(), 'contact' => $email]);
         }
 
         $users = collect([['Raditya Pradana', 'user@evocare.test'], ['Dewi Lestari', 'dewi@evocare.test'], ['Rizky Hidayat', 'rizky@evocare.test']])

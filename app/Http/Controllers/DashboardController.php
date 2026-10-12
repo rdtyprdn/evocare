@@ -11,7 +11,9 @@ class DashboardController extends Controller
         return match ($request->user()->role) {
             'admin' => redirect()->route('admin.categories.index'),
             'organizer' => redirect()->route('organizer.events.index'),
-            default => redirect()->route('registrations.index'),
+            default => $request->user()->organization_id
+                ? redirect()->route('organizations.create')
+                : redirect()->route('registrations.index'),
         };
     }
 }

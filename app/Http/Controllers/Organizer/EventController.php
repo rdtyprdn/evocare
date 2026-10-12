@@ -16,16 +16,22 @@ class EventController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        if (! $user->canManageEvents()) {
+            return redirect()->route('organizations.create');
+        }
         $events = Event::query()
             ->when(! $user->isAdmin(), fn ($q) => $q->where('user_id', $user->id))
-            ->with('category')->withCount('confirmedRegistrations')
+            ->with('category', 'organization')->withCount('confirmedRegistrations')
             ->orderByDesc('start_at')->paginate(15);
 
         return view('organizer.events.index', compact('events'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        if (! $request->user()->hasVerifiedOrganization()) {
+            return redirect()->route('organizations.create')->with('error', 'Anda perlu mendaftarkan organisasi dan menunggu verifikasi admin sebelum membuat kegiatan.');
+        }
         Gate::authorize('create', Event::class);
 
         return view('organizer.events.form', ['event' => new Event(['status' => 'published', 'quota' => 50]), 'categories' => Category::orderBy('name')->get()]);
@@ -37,13 +43,8 @@ class EventController extends Controller
         $data = $this->validated($request);
         $user = $request->user();
 
-        if (! $user->organization_id) {
-            $org = Organization::create(['name' => $user->name, 'slug' => Str::slug($user->name).'-'.Str::lower(Str::random(4)), 'type' => 'komunitas']);
-            $user->update(['organization_id' => $org->id]);
-        }
-
         $data['user_id'] = $user->id;
-        $data['organization_id'] = $user->organization_id;
+        $data['organization_id'] = $user->organization->id; // selalu organisasi milik pembuat
         $data['slug'] = Str::slug($data['title']).'-'.Str::lower(Str::random(5));
         if ($request->hasFile('image')) {
             $data['image_path'] = $request->file('image')->store('events', 'public');
@@ -64,6 +65,10 @@ class EventController extends Controller
     {
         Gate::authorize('update', $event);
         $data = $this->validated($request);
+
+        if ($data['status'] === 'published' && $event->status !== 'published' && ! $request->user()->hasVerifiedOrganization() && ! $request->user()->isAdmin()) {
+            return back()->withInput()->withErrors(['status' => 'Kegiatan hanya dapat dipublikasikan setelah organisasi Anda terverifikasi.']);
+        }
 
         $confirmed = $event->confirmedRegistrations()->count();
         if ($data['quota'] < $confirmed) {

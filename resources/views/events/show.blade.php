@@ -8,7 +8,8 @@
             @if ($event->status !== 'published')
                 <span class="inline-block px-2 py-1 text-xs rounded bg-gray-200">{{ \App\Models\Event::STATUSES[$event->status] }}</span>
             @endif
-            <p class="text-gray-600">Diselenggarakan oleh <strong>{{ $event->organization->name }}</strong> ({{ \App\Models\Organization::TYPES[$event->organization->type] ?? $event->organization->type }})</p>
+            <div class="text-gray-600 flex items-center gap-2 flex-wrap">Diselenggarakan oleh <x-event-organizer :event="$event" size="lg" />
+                @if ($event->organization)<span class="text-sm text-gray-400">({{ $event->organization->typeLabel() }})</span>@endif</div>
             <div class="prose max-w-none whitespace-pre-line">{{ $event->description }}</div>
         </div>
         <aside class="bg-white rounded-xl shadow-sm p-6 h-fit space-y-3">

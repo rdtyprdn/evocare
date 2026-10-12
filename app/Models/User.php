@@ -56,6 +56,17 @@ class User extends Authenticatable
             ->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('') ?: '?';
     }
 
+    public function hasVerifiedOrganization(): bool
+    {
+        return (bool) $this->organization?->isVerified();
+    }
+
+    /** Boleh membuka dashboard penyelenggara (punya organisasi, punya kegiatan lama, atau admin). */
+    public function canManageEvents(): bool
+    {
+        return $this->isAdmin() || $this->organization_id !== null || $this->events()->exists();
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';

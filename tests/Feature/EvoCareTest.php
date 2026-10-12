@@ -15,7 +15,7 @@ class EvoCareTest extends TestCase
 
     private function organizer(): User
     {
-        return User::factory()->create(['role' => 'organizer']);
+        return User::factory()->organizer()->create();
     }
 
     // ---------- Halaman publik, pencarian & filter ----------
@@ -153,7 +153,7 @@ class EvoCareTest extends TestCase
 
     public function test_regular_user_cannot_access_organizer_dashboard(): void
     {
-        $this->actingAs(User::factory()->create())->get(route('organizer.events.index'))->assertForbidden();
+        $this->actingAs(User::factory()->create())->get(route('organizer.events.index'))->assertRedirect(route('organizations.create'));
         $this->actingAs(User::factory()->create())->get(route('admin.categories.index'))->assertForbidden();
     }
 
@@ -170,7 +170,7 @@ class EvoCareTest extends TestCase
 
         $event = Event::where('title', 'Bakti Sosial Ramadan')->firstOrFail();
         $this->assertSame($org->id, $event->user_id);
-        $this->assertNotNull($event->organization_id);
+        $this->assertSame($org->organization_id, $event->organization_id);
     }
 
     public function test_event_validation(): void

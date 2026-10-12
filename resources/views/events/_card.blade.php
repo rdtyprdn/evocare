@@ -5,7 +5,7 @@
         <h3 class="mt-1 font-semibold text-lg group-hover:text-orange-600">{{ $event->title }}</h3>
         <p class="text-sm text-orange-700 mt-1">{{ $event->start_at->translatedFormat('D, d M Y · H:i') }}</p>
         <p class="text-sm text-gray-500">{{ $event->location }}, {{ $event->city }}</p>
-        <p class="text-sm text-gray-500 mt-auto pt-3">oleh <span class="font-medium">{{ $event->organization->name }}</span></p>
+        <p class="text-sm text-gray-500 mt-auto pt-3 flex items-center gap-1 flex-wrap">oleh <x-event-organizer :event="$event" /></p>
         @php $sisa = $event->remainingQuota(); @endphp
         <p class="text-xs mt-1 {{ $sisa ? 'text-green-700' : 'text-red-600' }}">{{ $sisa ? "Sisa kuota: {$sisa} / {$event->quota}" : 'Kuota penuh' }}</p>
     </div>

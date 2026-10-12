@@ -33,6 +33,15 @@ class UserFactory extends Factory
         ];
     }
 
+    /** Penyelenggara dengan organisasi terverifikasi miliknya sendiri. */
+    public function organizer(): static
+    {
+        return $this->state(['role' => 'organizer'])->afterCreating(function (\App\Models\User $user) {
+            $org = \App\Models\Organization::factory()->create(['owner_id' => $user->id]);
+            $user->update(['organization_id' => $org->id]);
+        });
+    }
+
     /**
      * Indicate that the model's email address should be unverified.
      */

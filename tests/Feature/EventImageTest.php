@@ -20,7 +20,7 @@ class EventImageTest extends TestCase
     {
         parent::setUp();
         Storage::fake('public');
-        $this->org = User::factory()->create(['role' => 'organizer']);
+        $this->org = User::factory()->organizer()->create();
     }
 
     private function payload(array $extra = []): array

@@ -21,7 +21,7 @@ class EventController extends Controller
         $events = Event::published()
             ->where('end_at', '>=', now())
             ->filter($filters)
-            ->with(['category', 'organization'])
+            ->with(['category', 'organization', 'creator'])
             ->withCount('confirmedRegistrations')
             ->orderBy('start_at')
             ->paginate(9)
@@ -39,7 +39,7 @@ class EventController extends Controller
     {
         abort_if($event->status === 'draft' && ! (auth()->user()?->can('update', $event)), 404);
 
-        $event->load(['category', 'organization'])->loadCount('confirmedRegistrations');
+        $event->load(['category', 'organization', 'creator'])->loadCount('confirmedRegistrations');
         $myRegistration = auth()->check()
             ? $event->registrations()->where('user_id', auth()->id())->first()
             : null;

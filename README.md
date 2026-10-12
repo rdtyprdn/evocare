@@ -52,6 +52,15 @@ DB_PASSWORD=root
 >
 > File lama `database/database.sqlite` disimpan sebagai cadangan dan tidak dipakai lagi.
 
+## Alur Organisasi Penyelenggara
+1. Pengguna biasa (relawan/donatur/peserta) tidak perlu organisasi.
+2. Siapa pun bisa klik **Daftar sebagai Penyelenggara** dan mengisi data organisasi (nama, jenis, kota, deskripsi, kontak, logo).
+3. Status organisasi: *Menunggu verifikasi* → *Terverifikasi* atau *Ditolak* (dengan alasan; bisa diperbaiki dan diajukan ulang).
+4. Admin memverifikasi di menu **Verifikasi Organisasi** (`/admin/organisasi`). Setelah diverifikasi, pemilik otomatis menjadi `organizer`.
+5. Hanya pengguna dengan organisasi terverifikasi yang bisa membuat/mempublikasikan kegiatan, dan kegiatan selalu memakai organisasi milik pembuatnya.
+
+Perintah perawatan data: `php artisan evocare:detach-org email@contoh.com [--dry-run]` melepas akun dari organisasi demo tanpa memindahkan kegiatannya ke organisasi lain (kegiatan otomatis terhubung ke organisasi milik akun itu setelah diverifikasi).
+
 ## Akun Demo (kata sandi semua: `password`)
 | Peran | Email |
 |---|---|

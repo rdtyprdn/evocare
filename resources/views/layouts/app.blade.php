@@ -20,6 +20,23 @@
             @endisset
 
             <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+                @auth
+                    @php $myOrg = Auth::user()->organization; @endphp
+                    @if ($myOrg && $myOrg->owner_id === Auth::id() && $myOrg->status === 'pending')
+                        <div class="mt-4 rounded-md bg-amber-50 border border-amber-200 p-3 text-amber-800 text-sm">
+                            Organisasi <strong>{{ $myOrg->name }}</strong> sedang <strong>menunggu verifikasi</strong> admin. Anda dapat membuat kegiatan setelah organisasi terverifikasi.
+                        </div>
+                    @elseif ($myOrg && $myOrg->owner_id === Auth::id() && $myOrg->status === 'rejected')
+                        <div class="mt-4 rounded-md bg-red-50 border border-red-200 p-3 text-red-800 text-sm">
+                            Pendaftaran organisasi <strong>{{ $myOrg->name }}</strong> ditolak{{ $myOrg->admin_note ? ': '.$myOrg->admin_note : '.' }}
+                            <a href="{{ route('organizations.create') }}" class="underline font-medium">Perbaiki dan ajukan ulang</a>
+                        </div>
+                    @elseif (! $myOrg && ! Auth::user()->isAdmin() && Auth::user()->events()->exists())
+                        <div class="mt-4 rounded-md bg-amber-50 border border-amber-200 p-3 text-amber-800 text-sm">
+                            Kegiatan Anda belum terhubung ke organisasi. <a href="{{ route('organizations.create') }}" class="underline font-medium">Daftarkan organisasi Anda</a> agar kegiatan tampil atas nama organisasi yang terverifikasi.
+                        </div>
+                    @endif
+                @endauth
                 @if (session('success'))
                     <div class="mt-4 rounded-md bg-green-50 border border-green-200 p-3 text-green-800">{{ session('success') }}</div>
                 @endif
