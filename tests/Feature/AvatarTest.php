@@ -97,4 +97,30 @@ class AvatarTest extends TestCase
             ->call('POST', route('profile.avatar.update'), [], [], [], ['CONTENT_LENGTH' => 19 * 1024 * 1024, 'HTTP_ACCEPT' => 'application/json'])
             ->assertStatus(413)->assertJson(['message' => 'Ukuran file terlalu besar. Maksimal 2 MB.']);
     }
+
+    public function test_success_after_too_large_error_shows_no_error(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user)->call('POST', route('profile.avatar.update'), [], [], [], [
+            'CONTENT_LENGTH' => 19 * 1024 * 1024, 'HTTP_REFERER' => route('profile.edit'),
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('profile.edit').'?upload_error=too_large')
+            ->post(route('profile.avatar.update'), ['avatar' => UploadedFile::fake()->image('ok.jpg')])
+            ->assertRedirect(route('profile.edit'));
+
+        $this->actingAs($user)->get(route('profile.edit'))
+            ->assertSee('Foto profil diperbarui.')->assertDontSee('Ukuran file terlalu besar');
+
+        // Walau URL masih membawa query, flash sukses menyembunyikan error.
+        $this->actingAs($user)->withSession(['status' => 'avatar-updated'])
+            ->get(route('profile.edit').'?upload_error=too_large')->assertDontSee('Ukuran file terlalu besar');
+    }
+
+    public function test_avatar_form_action_has_no_query_string(): void
+    {
+        $this->actingAs(User::factory()->create())->get(route('profile.edit').'?upload_error=too_large')
+            ->assertSee('action="'.route('profile.avatar.update').'"', false);
+    }
 }

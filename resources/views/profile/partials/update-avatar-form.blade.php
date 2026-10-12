@@ -1,6 +1,10 @@
 <section x-data="{
         preview: null,
-        error: @js(request('upload_error') === 'too_large' ? 'Ukuran file terlalu besar. Maksimal 2 MB.' : null),
+        error: @js(request('upload_error') === 'too_large' && ! session('status') && ! $errors->has('avatar') ? 'Ukuran file terlalu besar. Maksimal 2 MB.' : null),
+        init() {
+            const url = new URL(window.location.href);
+            if (url.searchParams.has('upload_error')) { url.searchParams.delete('upload_error'); history.replaceState(null, '', url.pathname + url.search + url.hash); }
+        },
         check(e) {
             const f = e.target.files[0];
             this.error = null; this.preview = null;
