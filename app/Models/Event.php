@@ -14,12 +14,22 @@ class Event extends Model
 
     protected $fillable = [
         'organization_id', 'category_id', 'user_id', 'title', 'slug', 'description',
-        'city', 'location', 'start_at', 'end_at', 'quota', 'image_url', 'status',
+        'city', 'location', 'start_at', 'end_at', 'quota', 'image_url', 'image_path', 'status',
     ];
 
     protected function casts(): array
     {
         return ['start_at' => 'datetime', 'end_at' => 'datetime', 'quota' => 'integer'];
+    }
+
+    /** Gambar unggahan diprioritaskan, lalu URL, null jika tidak ada. */
+    public function imageSrc(): ?string
+    {
+        if ($this->image_path) {
+            return asset('storage/'.$this->image_path);
+        }
+
+        return $this->image_url ?: null;
     }
 
     public function getRouteKeyName(): string

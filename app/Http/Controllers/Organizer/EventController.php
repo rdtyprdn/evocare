@@ -8,6 +8,7 @@ use App\Models\Event;
 use App\Models\Organization;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class EventController extends Controller
@@ -44,6 +45,9 @@ class EventController extends Controller
         $data['user_id'] = $user->id;
         $data['organization_id'] = $user->organization_id;
         $data['slug'] = Str::slug($data['title']).'-'.Str::lower(Str::random(5));
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $request->file('image')->store('events', 'public');
+        }
         Event::create($data);
 
         return redirect()->route('organizer.events.index')->with('success', 'Kegiatan berhasil dibuat.');
@@ -66,7 +70,16 @@ class EventController extends Controller
             return back()->withInput()->withErrors(['quota' => "Kuota tidak boleh kurang dari jumlah pendaftar saat ini ({$confirmed})."]);
         }
 
+        $old = $event->image_path;
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $request->file('image')->store('events', 'public');
+        } elseif ($request->boolean('remove_image')) {
+            $data['image_path'] = null;
+        }
         $event->update($data);
+        if ($old && $old !== $event->image_path) {
+            Storage::disk('public')->delete($old);
+        }
 
         return redirect()->route('organizer.events.index')->with('success', 'Kegiatan berhasil diperbarui.');
     }
@@ -74,7 +87,11 @@ class EventController extends Controller
     public function destroy(Event $event)
     {
         Gate::authorize('delete', $event);
+        $path = $event->image_path;
         $event->delete();
+        if ($path) {
+            Storage::disk('public')->delete($path);
+        }
 
         return redirect()->route('organizer.events.index')->with('success', 'Kegiatan dihapus.');
     }
@@ -89,7 +106,7 @@ class EventController extends Controller
 
     private function validated(Request $request): array
     {
-        return $request->validate([
+        $data = $request->validate([
             'title' => ['required', 'string', 'max:150'],
             'category_id' => ['required', 'exists:categories,id'],
             'description' => ['required', 'string'],
@@ -99,10 +116,17 @@ class EventController extends Controller
             'end_at' => ['required', 'date', 'after:start_at'],
             'quota' => ['required', 'integer', 'min:1', 'max:100000'],
             'image_url' => ['nullable', 'url', 'max:500'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'remove_image' => ['nullable', 'boolean'],
             'status' => ['required', 'in:draft,published,cancelled'],
         ], [], [
             'title' => 'judul', 'category_id' => 'kategori', 'description' => 'deskripsi', 'city' => 'kota',
             'location' => 'lokasi', 'start_at' => 'waktu mulai', 'end_at' => 'waktu selesai', 'quota' => 'kuota',
+            'image' => 'gambar kegiatan',
         ]);
+
+        unset($data['image'], $data['remove_image']);
+
+        return $data;
     }
 }

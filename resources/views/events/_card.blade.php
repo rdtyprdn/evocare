@@ -1,5 +1,5 @@
 <a href="{{ route('events.show', $event) }}" class="group bg-white rounded-xl shadow-sm hover:shadow-md overflow-hidden flex flex-col transition">
-    <img src="{{ $event->image_url ?: 'https://picsum.photos/seed/'.$event->id.'/800/400' }}" alt="{{ $event->title }}" class="h-44 w-full object-cover">
+    <x-event-image :event="$event" class="h-44" />
     <div class="p-4 flex-1 flex flex-col">
         <span class="text-xs font-semibold uppercase text-orange-600">{{ $event->category->name }}</span>
         <h3 class="mt-1 font-semibold text-lg group-hover:text-orange-600">{{ $event->title }}</h3>

@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="title">{{ $event->title }}</x-slot>
-    <img src="{{ $event->image_url ?: 'https://picsum.photos/seed/'.$event->id.'/1200/400' }}" alt="{{ $event->title }}" class="w-full h-64 object-cover">
+    <x-event-image :event="$event" class="h-64" />
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid gap-8 lg:grid-cols-3">
         <div class="lg:col-span-2 space-y-4">
             <span class="text-sm font-semibold uppercase text-orange-600">{{ $event->category->name }}</span>
