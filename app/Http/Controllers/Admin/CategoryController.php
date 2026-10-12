@@ -16,7 +16,7 @@ class CategoryController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate(['name' => ['required', 'string', 'max:60', 'unique:categories,name'], 'icon' => ['nullable', 'string', 'max:10']]);
+        $data = $request->validate(['name' => ['required', 'string', 'max:60', 'unique:categories,name']]);
         Category::create($data + ['slug' => Str::slug($data['name'])]);
 
         return back()->with('success', 'Kategori ditambahkan.');

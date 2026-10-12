@@ -3,7 +3,7 @@
     <img src="{{ $event->image_url ?: 'https://picsum.photos/seed/'.$event->id.'/1200/400' }}" alt="{{ $event->title }}" class="w-full h-64 object-cover">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid gap-8 lg:grid-cols-3">
         <div class="lg:col-span-2 space-y-4">
-            <span class="text-sm font-semibold uppercase text-orange-600">{{ $event->category->icon }} {{ $event->category->name }}</span>
+            <span class="text-sm font-semibold uppercase text-orange-600">{{ $event->category->name }}</span>
             <h1 class="text-3xl font-bold">{{ $event->title }}</h1>
             @if ($event->status !== 'published')
                 <span class="inline-block px-2 py-1 text-xs rounded bg-gray-200">{{ \App\Models\Event::STATUSES[$event->status] }}</span>
@@ -12,10 +12,10 @@
             <div class="prose max-w-none whitespace-pre-line">{{ $event->description }}</div>
         </div>
         <aside class="bg-white rounded-xl shadow-sm p-6 h-fit space-y-3">
-            <p>🗓️ <strong>{{ $event->start_at->translatedFormat('l, d F Y') }}</strong><br><span class="text-sm text-gray-600">{{ $event->start_at->format('H:i') }} – {{ $event->end_at->format('d M Y H:i') }}</span></p>
-            <p>📍 {{ $event->location }}, {{ $event->city }}</p>
+            <p><strong>{{ $event->start_at->translatedFormat('l, d F Y') }}</strong><br><span class="text-sm text-gray-600">{{ $event->start_at->format('H:i') }} – {{ $event->end_at->format('d M Y H:i') }}</span></p>
+            <p><span class="text-gray-500">Lokasi:</span> {{ $event->location }}, {{ $event->city }}</p>
             @php $sisa = $event->remainingQuota(); @endphp
-            <p>👥 Sisa kuota: <strong class="{{ $sisa ? 'text-green-700' : 'text-red-600' }}">{{ $sisa }}</strong> dari {{ $event->quota }}</p>
+            <p>Sisa kuota: <strong class="{{ $sisa ? 'text-green-700' : 'text-red-600' }}">{{ $sisa }}</strong> dari {{ $event->quota }}</p>
             <hr>
             @auth
                 @if ($myRegistration && $myRegistration->status === 'confirmed')

@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $cats = collect([
-            ['Pendidikan', '📚'], ['Kesehatan', '🩺'], ['Lingkungan', '🌱'], ['Pemberdayaan Ekonomi', '💼'], ['Darurat Bencana', '🚨'],
+            ['Pendidikan', null], ['Kesehatan', null], ['Lingkungan', null], ['Pemberdayaan Ekonomi', null], ['Darurat Bencana', null],
         ])->mapWithKeys(fn ($c) => [Str::slug($c[0]) => Category::create(['name' => $c[0], 'slug' => Str::slug($c[0]), 'icon' => $c[1]])]);
 
         User::create(['name' => 'Admin EvoCare', 'email' => 'admin@evocare.test', 'password' => 'password', 'role' => 'admin', 'email_verified_at' => now()]);

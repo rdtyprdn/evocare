@@ -11,6 +11,6 @@ class CategoryFactory extends Factory
     {
         $name = ucfirst(fake()->unique()->word());
 
-        return ['name' => $name, 'slug' => Str::slug($name), 'icon' => '⭐'];
+        return ['name' => $name, 'slug' => Str::slug($name), 'icon' => null];
     }
 }
