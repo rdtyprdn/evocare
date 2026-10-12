@@ -22,7 +22,7 @@ class AvatarController extends Controller
             Storage::disk('public')->delete($old);
         }
 
-        return redirect()->route('profile.edit')->with('status', 'avatar-updated');
+        return redirect()->to(route('profile.edit').'#foto-profil')->with('status', 'avatar-updated');
     }
 
     public function destroy(Request $request)
@@ -33,6 +33,6 @@ class AvatarController extends Controller
             $user->update(['avatar_path' => null]);
         }
 
-        return redirect()->route('profile.edit')->with('status', 'avatar-removed');
+        return redirect()->to(route('profile.edit').'#foto-profil')->with('status', 'avatar-removed');
     }
 }
