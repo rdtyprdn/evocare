@@ -11,13 +11,13 @@
                         <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Cari kegiatan" class="flex-1 min-w-0 border-0 focus:ring-0 text-sm">
                         <span class="h-6 w-px bg-gray-200 mx-2"></span>
                         <svg class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"/></svg>
-                        <div class="relative w-36 sm:w-56" x-data="cityAutocomplete(@js($filters['city'] ?? ''), @js(route('api.cities')))" @click.outside="open = false" @keydown.escape.window="open = false">
+                        <div class="relative w-36 sm:w-56" x-data="cityAutocomplete(@js($filters['city'] ?? ''), @js(route('api.cities')))" @click.outside="close()" @keydown.escape.window="close()">
                             <input type="hidden" name="city" :value="city">
-                            <input type="text" x-model="text" @input.debounce.200ms="onInput()" @focus="onFocus()"
+                            <input type="text" x-model="text" @input.debounce.200ms="onInput()"
                                    @keydown.arrow-down.prevent="move(1)" @keydown.arrow-up.prevent="move(-1)" @keydown.enter="enter($event)"
                                    placeholder="Semua kota" autocomplete="off" role="combobox" aria-autocomplete="list" :aria-expanded="open" aria-controls="city-listbox"
                                    class="w-full border-0 focus:ring-0 text-sm bg-transparent px-2">
-                            <ul id="city-listbox" x-show="open" x-cloak role="listbox"
+                            <ul id="city-listbox" x-show="open && items.length" x-cloak role="listbox"
                                 class="absolute left-0 top-full mt-4 w-72 bg-white rounded-xl shadow-xl ring-1 ring-black/5 py-2 z-50 text-left">
                                 <template x-for="(item, i) in items" :key="item.name + i">
                                     <li role="option" :aria-selected="i === active" @mouseenter="active = i" @mousedown.prevent="select(item)"
@@ -26,7 +26,6 @@
                                         <div class="text-xs text-gray-500 mt-0.5" x-text="item.subtitle"></div>
                                     </li>
                                 </template>
-                                <li x-show="!loading && items.length === 0" class="px-4 py-3 text-sm text-gray-500">Kota tidak ditemukan</li>
                             </ul>
                         </div>
                         <button class="ml-1 shrink-0 w-10 h-10 rounded-full bg-orange-600 hover:bg-orange-700 flex items-center justify-center" aria-label="Cari">

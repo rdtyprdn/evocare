@@ -92,4 +92,13 @@ class CitySearchTest extends TestCase
         $this->get('/?city=Denpasar')->assertOk()->assertSee('cityAutocomplete', false)
             ->assertSee('Aksi di Denpasar')->assertDontSee('Aksi di Kuta');
     }
+
+    public function test_city_dropdown_has_no_focus_open_or_empty_state_rows(): void
+    {
+        $this->get('/')->assertOk()
+            ->assertSee('placeholder="Semua kota"', false)
+            ->assertDontSee('@focus="onFocus()"', false)
+            ->assertDontSee('Kota tidak ditemukan')
+            ->assertSee('x-show="open && items.length"', false);
+    }
 }
