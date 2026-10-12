@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AvatarController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\CityController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\Organizer\EventController as OrganizerEventController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\RegistrationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [EventController::class, 'index'])->name('home');
+Route::get('/api/cities', [CityController::class, 'index'])->middleware('throttle:120,1')->name('api.cities');
 Route::get('/kegiatan/{event}', [EventController::class, 'show'])->name('events.show');
 
 Route::middleware('auth')->group(function () {

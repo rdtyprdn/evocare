@@ -239,7 +239,7 @@ class EvoCareTest extends TestCase
     {
         $this->seed();
         $this->assertDatabaseHas('users', ['email' => 'organizer@evocare.test', 'role' => 'organizer']);
-        $this->assertSame(10, Event::count());
+        $this->assertSame(13, Event::count());
         $this->get('/')->assertOk()->assertSee('Bersih Pantai Losari');
     }
 }

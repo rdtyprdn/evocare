@@ -14,6 +14,10 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        foreach (config('cities') as [$name, $region, $province]) {
+            \App\Models\City::create(compact('name', 'region', 'province'));
+        }
+
         $cats = collect([
             ['Pendidikan', null], ['Kesehatan', null], ['Lingkungan', null], ['Pemberdayaan Ekonomi', null], ['Darurat Bencana', null],
         ])->mapWithKeys(fn ($c) => [Str::slug($c[0]) => Category::create(['name' => $c[0], 'slug' => Str::slug($c[0]), 'icon' => $c[1]])]);
@@ -45,6 +49,9 @@ class DatabaseSeeder extends Seeder
             [2, 'kesehatan', 'Cek Kesehatan Gratis Warga Desa', 'Yogyakarta', 'Balai Desa Sleman', 10, 50, 'Pemeriksaan tensi, gula darah, dan konsultasi gizi. Dibutuhkan relawan tenaga kesehatan dan non-kesehatan.'],
             [2, 'pemberdayaan-ekonomi', 'Bazar Produk Desa Binaan', 'Yogyakarta', 'Alun-alun Utara', 25, 80, 'Bazar produk olahan desa binaan. Relawan membantu kasir, logistik, dan promosi.'],
             [2, 'pendidikan', 'Mengajar di Sekolah Pelosok', 'Yogyakarta', 'SD Negeri Gunungkidul 3', 30, 15, 'Program mengajar sehari di sekolah dasar pelosok: matematika, bahasa Inggris, dan sains sederhana.'],
+            [0, 'lingkungan', 'Bersih Pantai Sanur', 'Denpasar', 'Pantai Sanur', 6, 50, 'Aksi bersih pantai dan edukasi pengurangan sampah plastik bersama warga dan wisatawan di Sanur.'],
+            [1, 'pendidikan', 'Kelas Bahasa Inggris Anak Desa', 'Singaraja', 'Balai Banjar Panji', 9, 20, 'Relawan mengajar bahasa Inggris dasar untuk anak-anak agar siap menyambut dunia pariwisata.'],
+            [0, 'pemberdayaan-ekonomi', 'Pendampingan UMKM Nelayan Jimbaran', 'Jimbaran', 'Pasar Ikan Kedonganan', 14, 25, 'Pendampingan pemasaran digital dan pencatatan keuangan sederhana bagi UMKM nelayan dan pengolah ikan.'],
         ];
 
         foreach ($events as $i => [$o, $cat, $title, $city, $loc, $days, $quota, $desc]) {
