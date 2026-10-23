@@ -41,10 +41,14 @@
                 <x-primary-button>Simpan Foto</x-primary-button>
             </form>
             @if ($user->avatar_path)
-                <form method="post" action="{{ route('profile.avatar.destroy') }}" onsubmit="return confirm('Hapus foto profil?')">
-                    @csrf @method('delete')
-                    <button class="text-sm text-red-600 hover:underline">Hapus foto</button>
-                </form>
+                <x-confirm-delete-modal
+                    :action="route('profile.avatar.destroy')"
+                    title="Hapus Foto Profil?"
+                    description="Foto profil Anda akan dihapus dan digantikan kembali dengan inisial nama Anda."
+                    trigger-label="Hapus foto"
+                    trigger-class="text-sm text-red-600 hover:underline"
+                    confirm-label="Ya, Hapus Foto"
+                    cancel-label="Batal" />
             @endif
             <p x-show="error" x-cloak x-text="error" class="text-sm text-red-600" role="alert"></p>
             <x-input-error :messages="$errors->get('avatar')" />

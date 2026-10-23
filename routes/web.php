@@ -28,8 +28,13 @@ Route::middleware('auth')->group(function () {
 
     // Akses per kegiatan diatur oleh EventPolicy; pembuatan kegiatan butuh organisasi terverifikasi.
     Route::prefix('penyelenggara')->name('organizer.')->group(function () {
+        Route::get('jadwal', [OrganizerEventController::class, 'schedule'])->name('schedule');
+        Route::get('laporan', [OrganizerEventController::class, 'reports'])->name('reports');
         Route::resource('events', OrganizerEventController::class)->except('show');
         Route::get('events/{event}/pendaftar', [OrganizerEventController::class, 'registrants'])->name('events.registrants');
+        Route::get('events/{event}/pendaftar/ekspor', [OrganizerEventController::class, 'exportRegistrants'])->name('events.registrants.export');
+        Route::get('events/{event}/laporan', [OrganizerEventController::class, 'eventReport'])->name('events.report');
+        Route::put('events/{event}/laporan', [OrganizerEventController::class, 'updateReport'])->name('events.report.update');
     });
 
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {

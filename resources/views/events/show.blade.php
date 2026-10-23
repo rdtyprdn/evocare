@@ -21,10 +21,10 @@
             @auth
                 @if ($myRegistration && $myRegistration->status === 'confirmed')
                     <div class="rounded-md bg-green-50 p-3 text-green-800 text-sm">Anda terdaftar sebagai <strong>{{ \App\Models\Registration::TYPES[$myRegistration->type] }}</strong>.</div>
-                    <form method="POST" action="{{ route('registrations.destroy', $myRegistration) }}" onsubmit="return confirm('Batalkan pendaftaran?')">
-                        @csrf @method('DELETE')
-                        <button class="w-full rounded-md border border-red-300 py-2 text-red-600 hover:bg-red-50">Batalkan Pendaftaran</button>
-                    </form>
+                    <x-cancel-registration-modal
+                        :registration="$myRegistration"
+                        button-label="Batalkan Pendaftaran"
+                        button-class="w-full inline-flex items-center justify-center gap-1.5 rounded-md border border-red-300 bg-white py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition" />
                 @elseif ($event->status === 'published' && $sisa > 0 && $event->end_at->isFuture())
                     <form method="POST" action="{{ route('registrations.store', $event) }}" class="space-y-3">
                         @csrf
