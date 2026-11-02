@@ -2,7 +2,7 @@
     <x-slot name="header"><h2 class="font-semibold text-xl">{{ $event->exists ? 'Ubah Kegiatan' : 'Buat Kegiatan Baru' }}</h2></x-slot>
     <div class="max-w-3xl mx-auto px-4 py-8">
         <form method="POST" action="{{ $event->exists ? route('organizer.events.update', $event) : route('organizer.events.store') }}" enctype="multipart/form-data" class="bg-white rounded-xl shadow-sm p-6 space-y-4"
-              x-data="eventImageForm(@js($event->image_path ? asset('storage/'.$event->image_path) : null), @js(request('upload_error') === 'too_large' ? 'Ukuran file terlalu besar. Maksimal 2 MB.' : null))" @submit="submit($event)">
+              x-data="eventImageForm(@js($event->image_path ? asset('storage/'.$event->image_path) : null), @js(request('upload_error') === 'too_large' ? 'Ukuran file terlalu besar. Maksimal 10 MB.' : null))" @submit="submit($event)">
             @csrf
             @if ($event->exists) @method('PUT') @endif
             <div>
@@ -68,7 +68,7 @@
             </div>
             <div>
                 <x-input-label for="image" value="Gambar Kegiatan (opsional)" />
-                <p class="text-xs text-gray-500">JPG, PNG, atau WEBP, maksimal 2 MB. Jika diunggah, gambar ini dipakai menggantikan URL gambar.</p>
+                <p class="text-xs text-gray-500">JPG, PNG, atau WEBP, maksimal 10 MB. Jika diunggah, gambar ini dipakai menggantikan URL gambar.</p>
                 <div class="mt-2 flex flex-col sm:flex-row gap-4 items-start">
                     <div class="w-48 h-28 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center text-gray-300 shrink-0">
                         <img x-show="shown()" x-cloak :src="shown()" alt="Pratinjau gambar kegiatan" class="w-full h-full object-cover">
@@ -87,10 +87,14 @@
                     </div>
                 </div>
             </div>
-            <div class="flex justify-end gap-3">
+            @if (! $event->exists || auth()->user()->can('managePhotos', $event))
+                @include('organizer.events.partials.create-gallery')
+            @endif
+            <div class="sticky bottom-0 z-10 -mx-6 -mb-6 mt-2 flex justify-end gap-3 rounded-b-xl border-t border-gray-100 bg-white/95 px-6 py-4 backdrop-blur">
                 <a href="{{ route('organizer.events.index') }}" class="px-4 py-2 text-gray-600">Batal</a>
                 <x-primary-button>Simpan</x-primary-button>
             </div>
         </form>
+
     </div>
 </x-app-layout>

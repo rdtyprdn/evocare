@@ -1,13 +1,15 @@
 <?php
 
-use App\Http\Controllers\AvatarController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\OrganizationController as AdminOrganizationController;
-use App\Http\Controllers\OrganizationController;
+use App\Http\Controllers\Admin\OrganizationTypeController;
+use App\Http\Controllers\AvatarController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\Organizer\EventController as OrganizerEventController;
+use App\Http\Controllers\Organizer\EventPhotoController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegistrationController;
 use Illuminate\Support\Facades\Route;
@@ -31,6 +33,8 @@ Route::middleware('auth')->group(function () {
         Route::get('jadwal', [OrganizerEventController::class, 'schedule'])->name('schedule');
         Route::get('laporan', [OrganizerEventController::class, 'reports'])->name('reports');
         Route::resource('events', OrganizerEventController::class)->except('show');
+        Route::post('events/{event}/galeri', [EventPhotoController::class, 'store'])->name('events.photos.store');
+        Route::delete('events/{event}/galeri/{photo}', [EventPhotoController::class, 'destroy'])->scopeBindings()->name('events.photos.destroy');
         Route::get('events/{event}/pendaftar', [OrganizerEventController::class, 'registrants'])->name('events.registrants');
         Route::get('events/{event}/pendaftar/ekspor', [OrganizerEventController::class, 'exportRegistrants'])->name('events.registrants.export');
         Route::get('events/{event}/laporan', [OrganizerEventController::class, 'eventReport'])->name('events.report');
@@ -38,7 +42,11 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
-        Route::resource('categories', CategoryController::class)->only(['index', 'store', 'destroy']);
+        Route::resource('categories', CategoryController::class)->only(['index', 'store', 'update', 'destroy']);
+        Route::get('jenis-organisasi', [OrganizationTypeController::class, 'index'])->name('organization-types.index');
+        Route::post('jenis-organisasi', [OrganizationTypeController::class, 'store'])->name('organization-types.store');
+        Route::put('jenis-organisasi/{organizationType}', [OrganizationTypeController::class, 'update'])->name('organization-types.update');
+        Route::delete('jenis-organisasi/{organizationType}', [OrganizationTypeController::class, 'destroy'])->name('organization-types.destroy');
         Route::get('organisasi', [AdminOrganizationController::class, 'index'])->name('organizations.index');
         Route::post('organisasi/{organization}/verifikasi', [AdminOrganizationController::class, 'verify'])->name('organizations.verify');
         Route::post('organisasi/{organization}/tolak', [AdminOrganizationController::class, 'reject'])->name('organizations.reject');

@@ -6,7 +6,6 @@ use App\Models\Organization;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 
 /** Pendaftaran organisasi penyelenggara oleh pengguna. */
 class OrganizationController extends Controller
@@ -34,11 +33,11 @@ class OrganizationController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
-            'type' => ['required', Rule::in(array_keys(Organization::TYPES))],
+            'type' => ['required', 'exists:organization_types,slug'],
             'city' => ['required', 'string', 'max:80'],
             'description' => ['required', 'string', 'max:2000'],
             'contact' => ['required', 'string', 'max:150'],
-            'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
         ], [], [
             'name' => 'nama organisasi', 'type' => 'jenis organisasi', 'city' => 'kota',
             'description' => 'deskripsi', 'contact' => 'kontak', 'logo' => 'logo',

@@ -39,7 +39,7 @@ class EventController extends Controller
     {
         abort_if($event->status === 'draft' && ! (auth()->user()?->can('update', $event)), 404);
 
-        $event->load(['category', 'organization', 'creator'])->loadCount('confirmedRegistrations');
+        $event->load(['category', 'organization', 'creator', 'photos'])->loadCount('confirmedRegistrations');
         $myRegistration = auth()->check()
             ? $event->registrations()->where('user_id', auth()->id())->first()
             : null;

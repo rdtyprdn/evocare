@@ -1,3 +1,4 @@
+@php($authRedirect = request()->routeIs('events.show') ? ['redirect' => request()->getRequestUri()] : [])
 <nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
@@ -16,6 +17,7 @@
                         @if (Auth::user()->isAdmin())
                             <a href="{{ route('admin.organizations.index') }}" class="hover:text-orange-600 {{ request()->routeIs('admin.organizations.*') ? 'text-orange-600' : '' }}">Verifikasi Organisasi</a>
                             <a href="{{ route('admin.categories.index') }}" class="hover:text-orange-600 {{ request()->routeIs('admin.categories.*') ? 'text-orange-600' : '' }}">Kategori</a>
+                            <a href="{{ route('admin.organization-types.index') }}" class="hover:text-orange-600 {{ request()->routeIs('admin.organization-types.*') ? 'text-orange-600' : '' }}">Jenis Organisasi</a>
                         @endif
                     @endauth
                 </div>
@@ -25,8 +27,8 @@
                     <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 text-gray-600 hover:text-gray-900"><x-avatar :user="Auth::user()" class="w-8 h-8 text-xs" /><span class="flex flex-col leading-tight"><span>{{ Auth::user()->name }}</span>@if (Auth::user()->organization)<span class="text-xs text-gray-400">{{ Auth::user()->organization->name }}</span>@endif</span> <span class="text-xs text-gray-400">({{ \App\Models\User::ROLE_LABELS[Auth::user()->role] ?? Auth::user()->role }})</span></a>
                     <form method="POST" action="{{ route('logout') }}">@csrf<button class="text-gray-600 hover:text-red-600">Keluar</button></form>
                 @else
-                    <a href="{{ route('login') }}" class="text-gray-600 hover:text-gray-900">Masuk</a>
-                    <a href="{{ route('register') }}" class="rounded-md bg-orange-600 px-4 py-2 text-white hover:bg-orange-700">Daftar</a>
+                    <a href="{{ route('login', $authRedirect) }}" class="text-gray-600 hover:text-gray-900">Masuk</a>
+                    <a href="{{ route('register', $authRedirect) }}" class="rounded-md bg-orange-600 px-4 py-2 text-white hover:bg-orange-700">Daftar</a>
                 @endauth
             </div>
             <div class="flex items-center sm:hidden">
@@ -42,12 +44,12 @@
             @if (Auth::user()->canManageEvents())<a class="block" href="{{ route('organizer.events.index') }}">Dashboard Penyelenggara</a>@endif
             @if (! Auth::user()->organization_id && ! Auth::user()->isAdmin())<a class="block" href="{{ route('organizations.create') }}">Daftar sebagai Penyelenggara</a>@endif
             @if (Auth::user()->organization)<a class="block text-gray-500" href="{{ route('organizations.create') }}">Organisasi: {{ Auth::user()->organization->name }}</a>@endif
-            @if (Auth::user()->isAdmin())<a class="block" href="{{ route('admin.organizations.index') }}">Verifikasi Organisasi</a><a class="block" href="{{ route('admin.categories.index') }}">Kategori</a>@endif
+            @if (Auth::user()->isAdmin())<a class="block" href="{{ route('admin.organizations.index') }}">Verifikasi Organisasi</a><a class="block" href="{{ route('admin.categories.index') }}">Kategori</a><a class="block" href="{{ route('admin.organization-types.index') }}">Jenis Organisasi</a>@endif
             <a class="block" href="{{ route('profile.edit') }}">Profil</a>
             <form method="POST" action="{{ route('logout') }}">@csrf<button>Keluar</button></form>
         @else
-            <a class="block" href="{{ route('login') }}">Masuk</a>
-            <a class="block" href="{{ route('register') }}">Daftar</a>
+            <a class="block" href="{{ route('login', $authRedirect) }}">Masuk</a>
+            <a class="block" href="{{ route('register', $authRedirect) }}">Daftar</a>
         @endauth
     </div>
 </nav>

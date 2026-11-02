@@ -6,11 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Event;
 use App\Models\Registration;
+use App\Services\EventMediaService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EventController extends Controller
@@ -232,6 +235,7 @@ class EventController extends Controller
     {
         Gate::authorize('create', Event::class);
         $data = $this->validated($request);
+        $media = $this->validatedMedia($request);
         $user = $request->user();
 
         $data['user_id'] = $user->id;
@@ -240,22 +244,86 @@ class EventController extends Controller
         if ($request->hasFile('image')) {
             $data['image_path'] = $request->file('image')->store('events', 'public');
         }
-        Event::create($data);
+        try {
+            DB::transaction(function () use ($data, $media) {
+                $event = Event::create($data);
+                app(EventMediaService::class)->addMany($event, $media);
+            });
+        } catch (\Throwable $e) {
+            if (! empty($data['image_path'])) {
+                Storage::disk('public')->delete($data['image_path']);
+            }
+            report($e);
 
-        return redirect()->route('organizer.events.index')->with('success', 'Kegiatan berhasil dibuat.');
+            return back()->withInput()->withErrors(['gallery' => 'Kegiatan gagal disimpan karena media galeri tidak dapat diunggah. Silakan coba lagi.']);
+        }
+
+        $msg = 'Kegiatan berhasil dibuat.'.($media ? ' '.count($media).' item galeri dokumentasi ditambahkan.' : '');
+
+        return redirect()->route('organizer.events.index')->with('success', $msg);
+    }
+
+    /** Media galeri opsional pada form Buat/Ubah Kegiatan. $existing = jumlah item yang sudah tersimpan. */
+    private function validatedMedia(Request $request, int $existing = 0): array
+    {
+        $request->merge(['youtube_links' => array_values(array_filter(array_map(fn ($u) => is_string($u) ? trim($u) : $u, (array) $request->input('youtube_links', [])), fn ($u) => $u !== '' && $u !== null))]);
+
+        $request->validate([
+            'photos' => ['nullable', 'array', 'max:'.EventMediaService::MAX_PHOTOS_PER_UPLOAD],
+            'photos.*' => EventMediaService::photoRules(),
+            'videos' => ['nullable', 'array', 'max:'.EventMediaService::MAX_VIDEOS_PER_UPLOAD],
+            'videos.*' => EventMediaService::videoRules(),
+            'youtube_links' => ['nullable', 'array', 'max:'.EventMediaService::MAX_ITEMS],
+            'youtube_links.*' => ['string', 'max:300', function ($attr, $value, $fail) {
+                if (! EventMediaService::youtubeId($value)) {
+                    $fail('Tautan YouTube tidak valid: '.$value.'. Gunakan tautan seperti youtube.com/watch?v=..., youtu.be/... atau youtube.com/shorts/....');
+                }
+            }],
+            'photo_caption' => ['nullable', 'string', 'max:150'],
+            'video_caption' => ['nullable', 'string', 'max:150'],
+            'youtube_caption' => ['nullable', 'string', 'max:150'],
+        ], EventMediaService::messages() + [
+            'youtube_links.max' => 'Galeri maksimal berisi '.EventMediaService::MAX_ITEMS.' item.',
+            'photo_caption.max' => 'Keterangan maksimal 150 karakter.',
+            'video_caption.max' => 'Keterangan maksimal 150 karakter.',
+            'youtube_caption.max' => 'Keterangan maksimal 150 karakter.',
+        ]);
+
+        $cap = fn ($k) => $request->filled($k) ? trim($request->input($k)) : null;
+        $items = [];
+        foreach ((array) $request->file('photos', []) as $f) {
+            $items[] = ['type' => 'image', 'file' => $f, 'caption' => $cap('photo_caption')];
+        }
+        foreach ((array) $request->file('videos', []) as $f) {
+            $items[] = ['type' => 'video', 'file' => $f, 'caption' => $cap('video_caption')];
+        }
+        foreach ($request->input('youtube_links', []) as $u) {
+            $items[] = ['type' => 'youtube', 'youtube_id' => EventMediaService::youtubeId($u), 'caption' => $cap('youtube_caption')];
+        }
+
+        if ($existing + count($items) > EventMediaService::MAX_ITEMS) {
+            $sisa = max(0, EventMediaService::MAX_ITEMS - $existing);
+            throw ValidationException::withMessages(['gallery' => 'Galeri maksimal berisi '.EventMediaService::MAX_ITEMS.' item.'.($existing ? " Sudah ada {$existing} item, sisa {$sisa} slot." : '')]);
+        }
+
+        return $items;
     }
 
     public function edit(Event $event)
     {
         Gate::authorize('update', $event);
 
-        return view('organizer.events.form', ['event' => $event, 'categories' => Category::orderBy('name')->get()]);
+        return view('organizer.events.form', ['event' => $event->load('photos'), 'categories' => Category::orderBy('name')->get()]);
     }
 
     public function update(Request $request, Event $event)
     {
         Gate::authorize('update', $event);
         $data = $this->validated($request);
+        $media = $this->validatedMedia($request, $event->photos()->count());
+        if ($media) {
+            Gate::authorize('managePhotos', $event);
+        }
 
         if ($data['status'] === 'published' && $event->status !== 'published' && ! $request->user()->hasVerifiedOrganization() && ! $request->user()->isAdmin()) {
             return back()->withInput()->withErrors(['status' => 'Kegiatan hanya dapat dipublikasikan setelah organisasi Anda terverifikasi.']);
@@ -272,12 +340,28 @@ class EventController extends Controller
         } elseif ($request->boolean('remove_image')) {
             $data['image_path'] = null;
         }
-        $event->update($data);
+
+        try {
+            DB::transaction(function () use ($event, $data, $media) {
+                $event->update($data);
+                app(EventMediaService::class)->addMany($event, $media);
+            });
+        } catch (\Throwable $e) {
+            if ($request->hasFile('image') && ! empty($data['image_path'])) {
+                Storage::disk('public')->delete($data['image_path']);
+            }
+            report($e);
+
+            return back()->withInput()->withErrors(['gallery' => 'Perubahan gagal disimpan karena media galeri tidak dapat diunggah. Silakan coba lagi.']);
+        }
+
         if ($old && $old !== $event->image_path) {
             Storage::disk('public')->delete($old);
         }
 
-        return redirect()->route('organizer.events.index')->with('success', 'Kegiatan berhasil diperbarui.');
+        $msg = 'Kegiatan berhasil diperbarui.'.($media ? ' '.count($media).' item galeri dokumentasi ditambahkan.' : '');
+
+        return redirect()->route('organizer.events.index')->with('success', $msg);
     }
 
     public function destroy(Event $event)
@@ -383,7 +467,7 @@ class EventController extends Controller
             'end_at' => ['required', 'date', 'after:start_at'],
             'quota' => ['required', 'integer', 'min:1', 'max:100000'],
             'image_url' => ['nullable', 'url', 'max:500'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'remove_image' => ['nullable', 'boolean'],
             'status' => ['required', 'in:draft,published,cancelled'],
         ], [], [

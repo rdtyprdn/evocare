@@ -11,8 +11,6 @@ class Organization extends Model
 
     protected $fillable = ['owner_id', 'name', 'slug', 'type', 'description', 'city', 'logo_path', 'contact', 'status', 'admin_note', 'verified_at'];
 
-    public const TYPES = ['lsm' => 'Lembaga Swadaya Masyarakat', 'komunitas' => 'Komunitas', 'institusi' => 'Institusi Pendidikan'];
-
     public const STATUSES = ['pending' => 'Menunggu verifikasi', 'verified' => 'Terverifikasi', 'rejected' => 'Ditolak'];
 
     protected function casts(): array
@@ -47,6 +45,6 @@ class Organization extends Model
 
     public function typeLabel(): string
     {
-        return self::TYPES[$this->type] ?? $this->type;
+        return OrganizationType::labelFor($this->type);
     }
 }

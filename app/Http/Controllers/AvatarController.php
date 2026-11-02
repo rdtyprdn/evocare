@@ -10,9 +10,9 @@ class AvatarController extends Controller
     public function update(Request $request)
     {
         $request->validate(
-            ['avatar' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048']],
+            ['avatar' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240']],
             ['avatar.required' => 'Pilih foto terlebih dahulu.', 'avatar.image' => 'File harus berupa gambar.',
-             'avatar.mimes' => 'Format foto harus JPG, PNG, atau WEBP.', 'avatar.max' => 'Ukuran foto maksimal 2 MB.']
+                'avatar.mimes' => 'Format foto harus JPG, PNG, atau WEBP.', 'avatar.max' => 'Ukuran foto maksimal 10 MB.']
         );
 
         $user = $request->user();

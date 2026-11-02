@@ -28,7 +28,7 @@
             <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
             <x-input-error class="mt-2" :messages="$errors->get('email')" />
 
-            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
+            @if (! $user->hasVerifiedEmail())
                 <div>
                     <p class="text-sm mt-2 text-gray-800">
                         {{ __('Your email address is unverified.') }}
@@ -38,6 +38,9 @@
                         </button>
                     </p>
 
+                    @if (session('status') === 'email-verification-sent')
+                        <p class="mt-2 font-medium text-sm text-green-600">Email berhasil diperbarui. Tautan verifikasi telah dikirim ke alamat email baru Anda, silakan cek kotak masuk.</p>
+                    @endif
                     @if (session('status') === 'verification-link-sent')
                         <p class="mt-2 font-medium text-sm text-green-600">
                             {{ __('A new verification link has been sent to your email address.') }}

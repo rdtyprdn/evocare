@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Notifications\WelcomeVerifyEmail;
+use App\Support\SafeRedirect;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,8 +20,10 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
+        SafeRedirect::remember($request->query('redirect'));
+
         return view('auth.register');
     }
 
@@ -43,9 +47,15 @@ class RegisteredUserController extends Controller
         ]);
 
         event(new Registered($user));
+        // Kegagalan kirim email tidak boleh menggagalkan pembuatan akun.
+        try {
+            $user->notify(new WelcomeVerifyEmail);
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect()->intended(route('dashboard', absolute: false));
     }
 }

@@ -24,13 +24,13 @@
                 </div>
             </div>
         @else
-            <p class="text-gray-600">Daftarkan organisasi Anda (LSM, komunitas, atau institusi pendidikan) untuk membuat kegiatan. Admin akan memverifikasi data sebelum Anda bisa mempublikasikan kegiatan.</p>
+            <p class="text-gray-600">Daftarkan organisasi Anda dan pilih jenis organisasi yang paling sesuai untuk mulai membuat kegiatan. Admin akan memverifikasi data sebelum Anda bisa mempublikasikan kegiatan.</p>
         @endif
 
         @if ($canEdit)
             <form method="POST" action="{{ route('organizations.store') }}" enctype="multipart/form-data"
                   class="bg-white rounded-xl shadow-sm p-6 space-y-4"
-                  x-data="eventImageForm(@js($organization->logoUrl()), @js(request('upload_error') === 'too_large' ? 'Ukuran file terlalu besar. Maksimal 2 MB.' : null))" @submit="submit($event)">
+                  x-data="eventImageForm(@js($organization->logoUrl()), @js(request('upload_error') === 'too_large' ? 'Ukuran file terlalu besar. Maksimal 10 MB.' : null))" @submit="submit($event)">
                 @csrf
                 <h3 class="font-semibold">{{ $organization->exists ? 'Perbaiki dan Ajukan Ulang' : 'Data Organisasi' }}</h3>
                 <div>
@@ -42,7 +42,7 @@
                     <div>
                         <x-input-label for="type" value="Jenis" />
                         <select id="type" name="type" class="mt-1 w-full rounded-md border-gray-300">
-                            @foreach (\App\Models\Organization::TYPES as $val => $label)
+                            @foreach (\App\Models\OrganizationType::options() as $val => $label)
                                 <option value="{{ $val }}" @selected(old('type', $organization->type) === $val)>{{ $label }}</option>
                             @endforeach
                         </select>
@@ -65,7 +65,7 @@
                     <x-input-error :messages="$errors->get('contact')" class="mt-1" />
                 </div>
                 <div>
-                    <x-input-label for="logo" value="Logo (opsional, JPG/PNG/WEBP, maks. 2 MB)" />
+                    <x-input-label for="logo" value="Logo (opsional, JPG/PNG/WEBP, maks. 10 MB)" />
                     <div class="mt-2 flex items-center gap-4">
                         <div class="w-20 h-20 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center text-gray-300 shrink-0">
                             <img x-show="shown()" x-cloak :src="shown()" alt="Pratinjau logo" class="w-full h-full object-cover">

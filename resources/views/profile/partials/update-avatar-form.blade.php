@@ -1,6 +1,6 @@
 <section id="foto-profil" x-data="{
         preview: null,
-        error: @js(request('upload_error') === 'too_large' && ! session('status') && ! $errors->has('avatar') ? 'Ukuran file terlalu besar. Maksimal 2 MB.' : null),
+        error: @js(request('upload_error') === 'too_large' && ! session('status') && ! $errors->has('avatar') ? 'Ukuran file terlalu besar. Maksimal 10 MB.' : null),
         init() {
             const url = new URL(window.location.href);
             if (url.searchParams.has('upload_error')) { url.searchParams.delete('upload_error'); history.replaceState(null, '', url.pathname + url.search + url.hash); }
@@ -12,8 +12,8 @@
             if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) {
                 this.error = 'Format foto harus JPG, PNG, atau WEBP.'; e.target.value = ''; return;
             }
-            if (f.size > 2 * 1024 * 1024) {
-                this.error = 'Ukuran file terlalu besar. Maksimal 2 MB.'; e.target.value = ''; return;
+            if (f.size > 10 * 1024 * 1024) {
+                this.error = 'Ukuran file terlalu besar. Maksimal 10 MB.'; e.target.value = ''; return;
             }
             this.preview = URL.createObjectURL(f);
         },
@@ -24,7 +24,7 @@
     }">
     <header>
         <h2 class="text-lg font-medium text-gray-900">Foto Profil</h2>
-        <p class="mt-1 text-sm text-gray-600">Unggah foto JPG, PNG, atau WEBP dengan ukuran maksimal 2 MB.</p>
+        <p class="mt-1 text-sm text-gray-600">Unggah foto JPG, PNG, atau WEBP dengan ukuran maksimal 10 MB.</p>
     </header>
 
     <div class="mt-6 flex items-center gap-6">

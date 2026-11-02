@@ -109,7 +109,7 @@ class EventImageTest extends TestCase
     {
         $this->actingAs($this->org)->post(route('organizer.events.store'), $this->payload(['image' => UploadedFile::fake()->create('x.pdf', 10, 'application/pdf')]))
             ->assertSessionHasErrors('image');
-        $this->actingAs($this->org)->post(route('organizer.events.store'), $this->payload(['image' => UploadedFile::fake()->image('big.jpg')->size(3000)]))
+        $this->actingAs($this->org)->post(route('organizer.events.store'), $this->payload(['image' => UploadedFile::fake()->image('big.jpg')->size(10241)]))
             ->assertSessionHasErrors('image');
         $this->assertSame(0, Event::count());
     }
@@ -117,11 +117,11 @@ class EventImageTest extends TestCase
     public function test_post_too_large_on_event_form_redirects_back_with_message(): void
     {
         $this->actingAs($this->org)->call('POST', route('organizer.events.store'), [], [], [], [
-            'CONTENT_LENGTH' => 19 * 1024 * 1024, 'HTTP_REFERER' => route('organizer.events.create'),
+            'CONTENT_LENGTH' => 200 * 1024 * 1024, 'HTTP_REFERER' => route('organizer.events.create'),
         ])->assertRedirect(route('organizer.events.create').'?upload_error=too_large');
 
         $this->actingAs($this->org)->get(route('organizer.events.create').'?upload_error=too_large')
-            ->assertSee('Ukuran file terlalu besar. Maksimal 2 MB.');
+            ->assertSee('Ukuran file terlalu besar. Maksimal 10 MB.');
     }
 
     public function test_placeholder_shown_without_image(): void

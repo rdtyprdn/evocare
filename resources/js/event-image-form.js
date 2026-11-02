@@ -1,5 +1,5 @@
 const TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX = 2 * 1024 * 1024;
+const MAX = 10 * 1024 * 1024;
 
 export default (uploaded = null, serverError = null) => ({
     uploaded,
@@ -27,7 +27,7 @@ export default (uploaded = null, serverError = null) => ({
         this.preview = null;
         if (!f) return;
         if (!TYPES.includes(f.type)) { this.error = 'Format gambar harus JPG, PNG, atau WEBP.'; e.target.value = ''; return; }
-        if (f.size > MAX) { this.error = 'Ukuran file terlalu besar. Maksimal 2 MB.'; e.target.value = ''; return; }
+        if (f.size > MAX) { this.error = 'Ukuran file terlalu besar. Maksimal 10 MB.'; e.target.value = ''; return; }
         this.preview = URL.createObjectURL(f);
     },
     submit(e) {

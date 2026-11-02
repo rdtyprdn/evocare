@@ -66,7 +66,7 @@ class AvatarTest extends TestCase
     public function test_too_large_image_is_rejected(): void
     {
         $user = User::factory()->create();
-        $this->actingAs($user)->post(route('profile.avatar.update'), ['avatar' => UploadedFile::fake()->image('besar.jpg')->size(3000)])
+        $this->actingAs($user)->post(route('profile.avatar.update'), ['avatar' => UploadedFile::fake()->image('besar.jpg')->size(10241)])
             ->assertSessionHasErrors('avatar');
     }
 
@@ -81,28 +81,28 @@ class AvatarTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user)
             ->call('POST', route('profile.avatar.update'), [], [], [], [
-                'CONTENT_LENGTH' => 19 * 1024 * 1024,
+                'CONTENT_LENGTH' => 200 * 1024 * 1024,
                 'HTTP_REFERER' => route('profile.edit'),
             ])
             ->assertRedirect(route('profile.edit').'?upload_error=too_large');
 
         $this->actingAs($user)->get(route('profile.edit').'?upload_error=too_large')
-            ->assertOk()->assertSee('Ukuran file terlalu besar. Maksimal 2 MB.');
+            ->assertOk()->assertSee('Ukuran file terlalu besar. Maksimal 10 MB.');
         $this->assertNull($user->refresh()->avatar_path);
     }
 
     public function test_post_too_large_json_returns_413(): void
     {
         $this->actingAs(User::factory()->create())
-            ->call('POST', route('profile.avatar.update'), [], [], [], ['CONTENT_LENGTH' => 19 * 1024 * 1024, 'HTTP_ACCEPT' => 'application/json'])
-            ->assertStatus(413)->assertJson(['message' => 'Ukuran file terlalu besar. Maksimal 2 MB.']);
+            ->call('POST', route('profile.avatar.update'), [], [], [], ['CONTENT_LENGTH' => 200 * 1024 * 1024, 'HTTP_ACCEPT' => 'application/json'])
+            ->assertStatus(413)->assertJson(['message' => 'Ukuran file terlalu besar. Maksimal 10 MB per foto atau 30 MB per video.']);
     }
 
     public function test_success_after_too_large_error_shows_no_error(): void
     {
         $user = User::factory()->create();
         $this->actingAs($user)->call('POST', route('profile.avatar.update'), [], [], [], [
-            'CONTENT_LENGTH' => 19 * 1024 * 1024, 'HTTP_REFERER' => route('profile.edit'),
+            'CONTENT_LENGTH' => 200 * 1024 * 1024, 'HTTP_REFERER' => route('profile.edit'),
         ]);
 
         $this->actingAs($user)

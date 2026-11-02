@@ -16,7 +16,7 @@ class EventFactory extends Factory
         $start = now()->addDays(fake()->numberBetween(3, 30))->setTime(8, 0);
 
         return [
-            'organization_id' => Organization::factory(),
+            'organization_id' => fn (array $attrs) => (is_int($attrs['user_id'] ?? null) ? User::find($attrs['user_id'])?->organization_id : null) ?? Organization::factory(),
             'category_id' => Category::factory(),
             'user_id' => User::factory()->state(['role' => 'organizer']),
             'title' => $title,
