@@ -45,7 +45,9 @@ class EventCreateGalleryTest extends TestCase
             'photos' => [UploadedFile::fake()->image('a.jpg'), UploadedFile::fake()->image('b.png')],
             'videos' => [UploadedFile::fake()->create('c.mp4', 2000, 'video/mp4')],
             'youtube_links' => ['https://youtu.be/dQw4w9WgXcQ', '', 'https://www.youtube.com/watch?v=9bZkp7q19f0'],
-            'photo_caption' => 'Suasana acara',
+            'photo_captions' => ['Suasana acara', 'Peserta antusias'],
+            'video_captions' => ['Cuplikan video'],
+            'youtube_captions' => ['Video pertama', 'Video kedua'],
         ]))->assertSessionHasNoErrors()->assertRedirect(route('organizer.events.index'));
 
         $event = Event::firstOrFail();
@@ -53,6 +55,10 @@ class EventCreateGalleryTest extends TestCase
         $this->assertSame(['image', 'image', 'video', 'youtube', 'youtube'], $photos->pluck('type')->all());
         $this->assertSame([1, 2, 3, 4, 5], $photos->pluck('sort_order')->map(fn ($v) => (int) $v)->all());
         $this->assertSame('Suasana acara', $photos[0]->caption);
+        $this->assertSame('Peserta antusias', $photos[1]->caption);
+        $this->assertSame('Cuplikan video', $photos[2]->caption);
+        $this->assertSame('Video pertama', $photos[3]->caption);
+        $this->assertSame('Video kedua', $photos[4]->caption);
         $this->assertSame('dQw4w9WgXcQ', $photos[3]->youtube_id);
         Storage::disk('public')->assertExists($photos[0]->path);
         Storage::disk('public')->assertExists($photos[2]->path);
@@ -123,7 +129,9 @@ class EventCreateGalleryTest extends TestCase
             'photos' => [UploadedFile::fake()->image('a.jpg')],
             'videos' => [UploadedFile::fake()->create('b.webm', 1000, 'video/webm')],
             'youtube_links' => ['https://youtu.be/dQw4w9WgXcQ'],
-            'video_caption' => 'Cuplikan',
+            'photo_captions' => ['Foto baru'],
+            'video_captions' => ['Cuplikan'],
+            'youtube_captions' => ['Tautan rekap'],
         ]))->assertSessionHasNoErrors()->assertRedirect(route('organizer.events.index'));
 
         $event->refresh();
@@ -131,7 +139,9 @@ class EventCreateGalleryTest extends TestCase
         $items = $event->photos()->orderBy('sort_order')->get();
         $this->assertSame(['image', 'image', 'video', 'youtube'], $items->pluck('type')->all());
         $this->assertSame([1, 2, 3, 4], $items->pluck('sort_order')->map(fn ($v) => (int) $v)->all());
+        $this->assertSame('Foto baru', $items[1]->caption);
         $this->assertSame('Cuplikan', $items[2]->caption);
+        $this->assertSame('Tautan rekap', $items[3]->caption);
         Storage::disk('public')->assertExists($items[1]->path);
     }
 
@@ -169,5 +179,26 @@ class EventCreateGalleryTest extends TestCase
         $photo = $event->photos()->create(['path' => 'event-photos/1/lama.jpg', 'sort_order' => 1]);
         $this->actingAs($this->org)->delete(route('organizer.events.photos.destroy', [$event, $photo]))->assertRedirect();
         $this->assertDatabaseMissing('event_photos', ['id' => $photo->id]);
+    }
+
+    public function test_update_existing_captions(): void
+    {
+        $event = $this->ownedEvent();
+        $a = $event->photos()->create(['path' => 'event-photos/1/a.jpg', 'caption' => 'Lama A', 'sort_order' => 1]);
+        $b = $event->photos()->create(['path' => 'event-photos/1/b.jpg', 'caption' => 'Lama B', 'sort_order' => 2]);
+        $this->actingAs($this->org)->put(route('organizer.events.update', $event), $this->updatePayload($event, [
+            'existing_captions' => [$a->id => 'Baru A', $b->id => 'Baru B'],
+        ]))->assertSessionHasNoErrors()->assertRedirect(route('organizer.events.index'));
+        $this->assertSame('Baru A', $a->fresh()->caption);
+        $this->assertSame('Baru B', $b->fresh()->caption);
+    }
+
+    public function test_create_form_has_per_item_caption_fields(): void
+    {
+        $this->actingAs($this->org)->get(route('organizer.events.create'))->assertOk()
+            ->assertSee('photo_captions[', false)->assertSee('Keterangan foto (opsional)')
+            ->assertSee('video_captions[', false)->assertSee('Keterangan video (opsional)')
+            ->assertSee('youtube_captions[]', false)->assertSee('Keterangan tautan (opsional)')
+            ->assertDontSee('untuk semua foto ini');
     }
 }

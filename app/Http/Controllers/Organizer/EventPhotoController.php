@@ -42,6 +42,8 @@ class EventPhotoController extends Controller
             $request->validate([
                 'videos' => ['required', 'array', 'min:1', 'max:3'],
                 'videos.*' => EventMediaService::videoRules(),
+                'captions' => ['nullable', 'array'],
+                'captions.*' => ['nullable', 'string', 'max:150'],
             ], [
                 'videos.required' => 'Pilih minimal satu video.',
                 'videos.max' => 'Maksimal 3 video sekali unggah.',
@@ -56,6 +58,8 @@ class EventPhotoController extends Controller
             $request->validate([
                 'photos' => ['required', 'array', 'min:1', 'max:10'],
                 'photos.*' => EventMediaService::photoRules(),
+                'captions' => ['nullable', 'array'],
+                'captions.*' => ['nullable', 'string', 'max:150'],
             ], [
                 'photos.required' => 'Pilih minimal satu foto.',
                 'photos.max' => 'Maksimal 10 foto sekali unggah.',
@@ -73,7 +77,14 @@ class EventPhotoController extends Controller
             return $back()->withErrors([$field => 'Galeri maksimal berisi '.self::MAX_ITEMS.' item.']);
         }
 
-        $this->media->addMany($event, array_map(fn ($f) => ['type' => $type, 'file' => $f, 'caption' => $caption], $files));
+        $caps = array_values((array) $request->input('captions', []));
+        $items = [];
+        foreach (array_values($files) as $i => $f) {
+            $c = $caps[$i] ?? $caption;
+            $c = is_string($c) ? trim($c) : null;
+            $items[] = ['type' => $type, 'file' => $f, 'caption' => ($c === '' || $c === null) ? null : $c];
+        }
+        $this->media->addMany($event, $items);
 
         return $back()->with('success', count($files).' '.$label.' dokumentasi berhasil diunggah.');
     }

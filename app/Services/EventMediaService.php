@@ -99,4 +99,32 @@ class EventMediaService
     {
         return EventPhoto::parseYoutubeId($url);
     }
+
+    /**
+     * Perbarui keterangan item galeri yang sudah tersimpan.
+     *
+     * @param  array<int|string, mixed>  $captions  keyed by EventPhoto id
+     */
+    public function updateCaptions(Event $event, array $captions): int
+    {
+        $updated = 0;
+        foreach ($captions as $id => $caption) {
+            if (! is_numeric($id)) {
+                continue;
+            }
+            $photo = $event->photos()->whereKey((int) $id)->first();
+            if (! $photo) {
+                continue;
+            }
+            $value = is_string($caption) ? trim($caption) : '';
+            $value = $value === '' ? null : mb_substr($value, 0, 150);
+            if ($photo->caption === $value) {
+                continue;
+            }
+            $photo->update(['caption' => $value]);
+            $updated++;
+        }
+
+        return $updated;
+    }
 }

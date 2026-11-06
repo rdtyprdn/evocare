@@ -12,7 +12,7 @@ export default (initialTab = 'photo', initialLinks = [], existing = 0) => ({
     existing,
     photos: [],
     videos: [],
-    links: initialLinks.length ? initialLinks.map((v) => ({ v })) : [{ v: '' }],
+    links: initialLinks.length ? initialLinks.map((v) => (typeof v === 'object' ? { v: v.v ?? '', caption: v.caption ?? '' } : { v, caption: '' })) : [{ v: '', caption: '' }],
     error: null,
     fmt,
     init() {
@@ -36,7 +36,7 @@ export default (initialTab = 'photo', initialLinks = [], existing = 0) => ({
             if (!cfg.types.includes(f.type)) { this.error = cfg.typeMsg + ' (' + f.name + ')'; continue; }
             if (f.size > cfg.mb * 1024 * 1024) { this.error = 'Ukuran file terlalu besar. Maksimal ' + cfg.mb + ' MB per ' + cfg.unit + ' (' + f.name + ').'; continue; }
             if (list.length >= cfg.max) { this.error = 'Maksimal ' + cfg.max + ' ' + cfg.unit + ' sekali simpan.'; break; }
-            list.push({ file: f, url: URL.createObjectURL(f) });
+            list.push({ file: f, url: URL.createObjectURL(f), caption: '' });
         }
         this.sync(field);
     },
@@ -51,8 +51,8 @@ export default (initialTab = 'photo', initialLinks = [], existing = 0) => ({
         this[field].forEach((i) => dt.items.add(i.file));
         this.$refs[field].files = dt.files;
     },
-    addLink() { this.links.push({ v: '' }); },
-    removeLink(i) { this.links.splice(i, 1); if (!this.links.length) this.links.push({ v: '' }); },
+    addLink() { this.links.push({ v: '', caption: '' }); },
+    removeLink(i) { this.links.splice(i, 1); if (!this.links.length) this.links.push({ v: '', caption: '' }); },
     validateAll() {
         if (this.totalBytes() > TOTAL_MB * 1024 * 1024) return 'Total unggahan sekali simpan maksimal ' + TOTAL_MB + ' MB (saat ini ' + fmt(this.totalBytes()) + '). Kurangi jumlah file.';
         if (this.itemCount() + this.existing > MAX_ITEMS) return 'Galeri maksimal berisi ' + MAX_ITEMS + ' item (sudah ada ' + this.existing + ' item tersimpan).';

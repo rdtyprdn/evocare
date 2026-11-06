@@ -279,26 +279,40 @@ class EventController extends Controller
                     $fail('Tautan YouTube tidak valid: '.$value.'. Gunakan tautan seperti youtube.com/watch?v=..., youtu.be/... atau youtube.com/shorts/....');
                 }
             }],
-            'photo_caption' => ['nullable', 'string', 'max:150'],
-            'video_caption' => ['nullable', 'string', 'max:150'],
-            'youtube_caption' => ['nullable', 'string', 'max:150'],
+            'photo_captions' => ['nullable', 'array'],
+            'photo_captions.*' => ['nullable', 'string', 'max:150'],
+            'video_captions' => ['nullable', 'array'],
+            'video_captions.*' => ['nullable', 'string', 'max:150'],
+            'youtube_captions' => ['nullable', 'array'],
+            'youtube_captions.*' => ['nullable', 'string', 'max:150'],
+            'existing_captions' => ['nullable', 'array'],
+            'existing_captions.*' => ['nullable', 'string', 'max:150'],
         ], EventMediaService::messages() + [
             'youtube_links.max' => 'Galeri maksimal berisi '.EventMediaService::MAX_ITEMS.' item.',
-            'photo_caption.max' => 'Keterangan maksimal 150 karakter.',
-            'video_caption.max' => 'Keterangan maksimal 150 karakter.',
-            'youtube_caption.max' => 'Keterangan maksimal 150 karakter.',
+            'photo_captions.*.max' => 'Keterangan maksimal 150 karakter.',
+            'video_captions.*.max' => 'Keterangan maksimal 150 karakter.',
+            'youtube_captions.*.max' => 'Keterangan maksimal 150 karakter.',
+            'existing_captions.*.max' => 'Keterangan maksimal 150 karakter.',
         ]);
 
-        $cap = fn ($k) => $request->filled($k) ? trim($request->input($k)) : null;
+        $capAt = function (string $key, int $i) use ($request): ?string {
+            $raw = $request->input($key.'.'.$i);
+            if (! is_string($raw)) {
+                return null;
+            }
+            $raw = trim($raw);
+
+            return $raw === '' ? null : $raw;
+        };
         $items = [];
-        foreach ((array) $request->file('photos', []) as $f) {
-            $items[] = ['type' => 'image', 'file' => $f, 'caption' => $cap('photo_caption')];
+        foreach (array_values((array) $request->file('photos', [])) as $i => $f) {
+            $items[] = ['type' => 'image', 'file' => $f, 'caption' => $capAt('photo_captions', $i)];
         }
-        foreach ((array) $request->file('videos', []) as $f) {
-            $items[] = ['type' => 'video', 'file' => $f, 'caption' => $cap('video_caption')];
+        foreach (array_values((array) $request->file('videos', [])) as $i => $f) {
+            $items[] = ['type' => 'video', 'file' => $f, 'caption' => $capAt('video_captions', $i)];
         }
-        foreach ($request->input('youtube_links', []) as $u) {
-            $items[] = ['type' => 'youtube', 'youtube_id' => EventMediaService::youtubeId($u), 'caption' => $cap('youtube_caption')];
+        foreach (array_values($request->input('youtube_links', [])) as $i => $u) {
+            $items[] = ['type' => 'youtube', 'youtube_id' => EventMediaService::youtubeId($u), 'caption' => $capAt('youtube_captions', $i)];
         }
 
         if ($existing + count($items) > EventMediaService::MAX_ITEMS) {
@@ -321,7 +335,8 @@ class EventController extends Controller
         Gate::authorize('update', $event);
         $data = $this->validated($request);
         $media = $this->validatedMedia($request, $event->photos()->count());
-        if ($media) {
+        $existingCaptions = $request->input('existing_captions', []);
+        if ($media || $existingCaptions) {
             Gate::authorize('managePhotos', $event);
         }
 
@@ -342,9 +357,12 @@ class EventController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($event, $data, $media) {
+            DB::transaction(function () use ($event, $data, $media, $existingCaptions) {
                 $event->update($data);
                 app(EventMediaService::class)->addMany($event, $media);
+                if (is_array($existingCaptions) && $existingCaptions !== []) {
+                    app(EventMediaService::class)->updateCaptions($event, $existingCaptions);
+                }
             });
         } catch (\Throwable $e) {
             if ($request->hasFile('image') && ! empty($data['image_path'])) {
