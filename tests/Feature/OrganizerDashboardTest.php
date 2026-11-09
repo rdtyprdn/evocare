@@ -252,4 +252,46 @@ class OrganizerDashboardTest extends TestCase
             ->assertSee('Ya, Batalkan Pendaftaran')
             ->assertDontSee('return confirm(', false);
     }
+
+    public function test_my_registrations_shows_tiket_saya_with_ticket_code(): void
+    {
+        $user = User::factory()->create();
+        $event = Event::factory()->create(['title' => 'Donor Darah Kampus']);
+        $reg = Registration::create(['user_id' => $user->id, 'event_id' => $event->id, 'type' => 'relawan', 'status' => 'confirmed']);
+        $code = $reg->ticketCode();
+
+        $page = $this->actingAs($user)->get(route('registrations.index'));
+        $page->assertOk()
+            ->assertSee('Tiket Saya')
+            ->assertSee('Tiket Partisipasi')
+            ->assertSee('Cetak / Simpan')
+            ->assertSee(route('registrations.ticket', $reg), false)
+            ->assertSee($code)
+            ->assertSee('Kode Tiket')
+            ->assertSee('Donor Darah Kampus');
+
+        $ticketPage = $this->actingAs($user)->get(route('registrations.ticket', ['registration' => $reg, 'autoprint' => 1]));
+        $ticketPage->assertOk()
+            ->assertSee('EvoCare')
+            ->assertSee('Tiket Partisipasi')
+            ->assertSee($code)
+            ->assertSee('Donor Darah Kampus')
+            ->assertSee('Sebagai Relawan')
+            ->assertSee('window.print()', false)
+            ->assertDontSee('Jelajahi Kegiatan')
+            ->assertSee('Kembali ke Pendaftaran Saya');
+
+        // Orang lain / tamu / dibatalkan tidak boleh buka halaman cetak
+        auth()->logout();
+        $this->get(route('registrations.ticket', $reg))->assertRedirect(route('login'));
+        $this->actingAs(User::factory()->create())->get(route('registrations.ticket', $reg))->assertForbidden();
+
+        $reg->update(['status' => 'cancelled']);
+        $this->actingAs($user)->get(route('registrations.ticket', $reg))->assertForbidden();
+        $this->actingAs($user)->get(route('registrations.index'))
+            ->assertOk()
+            ->assertDontSee('>Tiket Saya</span>', false)
+            ->assertSee('Dibatalkan');
+    }
+
 }

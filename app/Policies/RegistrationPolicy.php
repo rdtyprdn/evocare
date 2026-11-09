@@ -11,4 +11,10 @@ class RegistrationPolicy
     {
         return $registration->user_id === $user->id;
     }
+
+    public function viewTicket(User $user, Registration $registration): bool
+    {
+        return $registration->user_id === $user->id && $registration->status === 'confirmed';
+    }
 }
+

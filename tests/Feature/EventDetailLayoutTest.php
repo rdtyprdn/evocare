@@ -61,8 +61,10 @@ class EventDetailLayoutTest extends TestCase
     public function test_logged_in_user_sees_registration_bar(): void
     {
         $this->actingAs(User::factory()->create())->get(route('events.show', $this->event))->assertOk()
-            ->assertSee('Daftar sebagai')->assertSee('name="type"', false)->assertSee('name="note"', false)
-            ->assertSee('Daftar Sekarang')->assertSee('href="#daftar"', false);
+            ->assertDontSee('name="type"', false)->assertDontSee('name="note"', false)
+            ->assertSee('Daftar Sekarang')
+            ->assertSee(route('registrations.create', $this->event), false)
+            ->assertSee('href="#daftar"', false);
     }
 
     public function test_registered_user_sees_green_bar_with_cancel(): void

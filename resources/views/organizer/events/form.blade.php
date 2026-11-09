@@ -87,6 +87,7 @@
                     </div>
                 </div>
             </div>
+            @include('organizer.events.partials.registration-questions')
             @if (! $event->exists || auth()->user()->can('managePhotos', $event))
                 @include('organizer.events.partials.create-gallery')
             @endif

@@ -22,4 +22,14 @@ class Registration extends Model
     {
         return $this->belongsTo(Event::class);
     }
+
+    public function ticketCode(): string
+    {
+        return 'EVC-'.str_pad((string) $this->id, 4, '0', STR_PAD_LEFT);
+    }
+
+    public function answers()
+    {
+        return $this->hasMany(RegistrationAnswer::class)->orderBy('sort_order')->orderBy('id');
+    }
 }

@@ -14,7 +14,8 @@
                     <p class="text-sm text-gray-700">Sebagai <strong>{{ \App\Models\Registration::TYPES[$r->type] }}</strong></p>
                 </div>
                 @if ($r->status === 'confirmed')
-                    <div class="shrink-0">
+                    <div class="shrink-0 flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        <x-view-ticket-modal :registration="$r" />
                         <x-cancel-registration-modal :registration="$r" button-label="Batalkan" />
                     </div>
                 @endif

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Event;
+use App\Models\EventQuestion;
 use App\Models\Registration;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
@@ -17,10 +18,11 @@ use RuntimeException;
  */
 class RegistrationService
 {
-    public function register(User $user, Event $event, string $type, ?string $note = null): Registration
+    /** @param  array<int, array{question: EventQuestion, value: ?string}>  $answers */
+    public function register(User $user, Event $event, string $type, ?string $note = null, array $answers = []): Registration
     {
-        return Cache::lock("event-register:{$event->id}", 10)->block(5, function () use ($user, $event, $type, $note) {
-            return DB::transaction(function () use ($user, $event, $type, $note) {
+        return Cache::lock("event-register:{$event->id}", 10)->block(5, function () use ($user, $event, $type, $note, $answers) {
+            return DB::transaction(function () use ($user, $event, $type, $note, $answers) {
                 $locked = Event::whereKey($event->id)->lockForUpdate()->firstOrFail();
 
                 if ($locked->status !== 'published') {
@@ -42,15 +44,35 @@ class RegistrationService
 
                 if ($existing) {
                     $existing->update(['status' => 'confirmed', 'type' => $type, 'note' => $note]);
-
-                    return $existing;
+                    $registration = $existing;
+                } else {
+                    $registration = Registration::create([
+                        'user_id' => $user->id, 'event_id' => $locked->id,
+                        'type' => $type, 'status' => 'confirmed', 'note' => $note,
+                    ]);
                 }
 
-                return Registration::create([
-                    'user_id' => $user->id, 'event_id' => $locked->id,
-                    'type' => $type, 'status' => 'confirmed', 'note' => $note,
-                ]);
+                $this->saveAnswers($registration, $answers);
+
+                return $registration;
             });
         });
+    }
+
+    /** Jawaban disimpan beserta salinan label dan tipe pertanyaan saat mendaftar. */
+    private function saveAnswers(Registration $registration, array $answers): void
+    {
+        $registration->answers()->delete(); // daftar ulang setelah batal: jawaban lama diganti
+
+        foreach (array_values($answers) as $i => $a) {
+            $q = $a['question'];
+            $registration->answers()->create([
+                'event_question_id' => $q->id,
+                'label' => $q->label,
+                'type' => $q->type,
+                'value' => $a['value'],
+                'sort_order' => $i + 1,
+            ]);
+        }
     }
 }

@@ -4,12 +4,6 @@
     'buttonClass' => 'inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 hover:border-red-300 transition',
 ])
 
-@php
-    $event = $registration->event;
-    $roleLabel = \App\Models\Registration::TYPES[$registration->type] ?? ucfirst($registration->type);
-    $ticketCode = 'EVC-'.str_pad((string) $registration->id, 4, '0', STR_PAD_LEFT);
-@endphp
-
 <div x-data="{ open: false, submitting: false }" @keydown.escape.window="if (!submitting) open = false" class="inline-block w-full sm:w-auto">
     <button type="button" @click="open = true" class="{{ $buttonClass }}">
         <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
@@ -64,52 +58,7 @@
                         Tinjau kembali rincian tiket partisipasi Anda di bawah ini sebelum mengonfirmasi pembatalan keikutsertaan.
                     </p>
 
-                    <!-- Visual Kartu Tiket Partisipasi EvoCare -->
-                    <div class="relative rounded-xl border border-orange-200 bg-orange-50/40 overflow-hidden">
-                        <div class="p-4 space-y-2.5">
-                            <div class="flex items-center justify-between gap-2 flex-wrap">
-                                <span class="inline-flex items-center rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-semibold text-orange-800">
-                                    {{ $event->category->name ?? 'Kegiatan Sosial' }}
-                                </span>
-                                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
-                                    Terkonfirmasi
-                                </span>
-                            </div>
-
-                            <h4 class="font-bold text-gray-900 text-base leading-snug">{{ $event->title }}</h4>
-
-                            <div class="space-y-1.5 text-xs text-gray-600 pt-1">
-                                <div class="flex items-center gap-2">
-                                    <svg class="w-4 h-4 text-orange-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/></svg>
-                                    <span>{{ $event->start_at->translatedFormat('l, d F Y · H:i') }} WITA</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <svg class="w-4 h-4 text-orange-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"/></svg>
-                                    <span>{{ $event->location ? $event->location.', ' : '' }}{{ $event->city }}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Garis Potong Tiket (Perforated Divider) -->
-                        <div class="relative flex items-center justify-between">
-                            <span class="w-4 h-4 rounded-full bg-white border border-orange-200 -ml-2"></span>
-                            <div class="flex-1 border-t-2 border-dashed border-orange-200"></div>
-                            <span class="w-4 h-4 rounded-full bg-white border border-orange-200 -mr-2"></span>
-                        </div>
-
-                        <!-- Bagian Bawah Tiket -->
-                        <div class="px-4 py-3 bg-orange-100/40 flex items-center justify-between text-xs">
-                            <div>
-                                <span class="text-gray-500 block">Peran Partisipasi</span>
-                                <span class="font-bold text-gray-900 text-sm">Sebagai {{ $roleLabel }}</span>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-gray-500 block">Kode Tiket</span>
-                                <span class="font-mono font-semibold text-gray-800">{{ $ticketCode }}</span>
-                            </div>
-                        </div>
-                    </div>
+                    <x-participation-ticket :registration="$registration" />
 
                     <!-- Informasi Dampak Pembatalan -->
                     <div class="rounded-xl bg-gray-50 border border-gray-200/80 p-3.5 space-y-2 text-xs text-gray-600">

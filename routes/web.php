@@ -21,8 +21,10 @@ Route::get('/kegiatan/{event}', [EventController::class, 'show'])->name('events.
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
+    Route::get('/kegiatan/{event}/daftar', [RegistrationController::class, 'create'])->name('registrations.create');
     Route::post('/kegiatan/{event}/daftar', [RegistrationController::class, 'store'])->name('registrations.store');
     Route::get('/pendaftaran-saya', [RegistrationController::class, 'index'])->name('registrations.index');
+    Route::get('/pendaftaran-saya/{registration}/tiket', [RegistrationController::class, 'ticket'])->name('registrations.ticket');
     Route::delete('/pendaftaran/{registration}', [RegistrationController::class, 'destroy'])->name('registrations.destroy');
 
     Route::get('/penyelenggara/daftar', [OrganizationController::class, 'create'])->name('organizations.create');

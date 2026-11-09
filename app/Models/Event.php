@@ -77,6 +77,11 @@ class Event extends Model
         return $this->hasMany(EventPhoto::class)->orderBy('sort_order')->orderBy('id');
     }
 
+    public function questions()
+    {
+        return $this->hasMany(EventQuestion::class)->orderBy('sort_order')->orderBy('id');
+    }
+
     public function confirmedRegistrations()
     {
         return $this->hasMany(Registration::class)->where('status', 'confirmed');

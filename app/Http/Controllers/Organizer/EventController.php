@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Event;
 use App\Models\Registration;
 use App\Services\EventMediaService;
+use App\Services\EventQuestionService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -228,7 +229,13 @@ class EventController extends Controller
         }
         Gate::authorize('create', Event::class);
 
-        return view('organizer.events.form', ['event' => new Event(['status' => 'published', 'quota' => 50]), 'categories' => Category::orderBy('name')->get()]);
+        $event = new Event(['status' => 'published', 'quota' => 50]);
+
+        return view('organizer.events.form', [
+            'event' => $event,
+            'categories' => Category::orderBy('name')->get(),
+            'questionState' => app(EventQuestionService::class)->builderState($event),
+        ]);
     }
 
     public function store(Request $request)
@@ -236,6 +243,7 @@ class EventController extends Controller
         Gate::authorize('create', Event::class);
         $data = $this->validated($request);
         $media = $this->validatedMedia($request);
+        $questions = app(EventQuestionService::class)->validated($request);
         $user = $request->user();
 
         $data['user_id'] = $user->id;
@@ -245,8 +253,9 @@ class EventController extends Controller
             $data['image_path'] = $request->file('image')->store('events', 'public');
         }
         try {
-            DB::transaction(function () use ($data, $media) {
+            DB::transaction(function () use ($data, $media, $questions) {
                 $event = Event::create($data);
+                app(EventQuestionService::class)->sync($event, $questions);
                 app(EventMediaService::class)->addMany($event, $media);
             });
         } catch (\Throwable $e) {
@@ -327,7 +336,11 @@ class EventController extends Controller
     {
         Gate::authorize('update', $event);
 
-        return view('organizer.events.form', ['event' => $event->load('photos'), 'categories' => Category::orderBy('name')->get()]);
+        return view('organizer.events.form', [
+            'event' => $event->load('photos'),
+            'categories' => Category::orderBy('name')->get(),
+            'questionState' => app(EventQuestionService::class)->builderState($event),
+        ]);
     }
 
     public function update(Request $request, Event $event)
@@ -335,6 +348,7 @@ class EventController extends Controller
         Gate::authorize('update', $event);
         $data = $this->validated($request);
         $media = $this->validatedMedia($request, $event->photos()->count());
+        $questions = app(EventQuestionService::class)->validated($request);
         $existingCaptions = $request->input('existing_captions', []);
         if ($media || $existingCaptions) {
             Gate::authorize('managePhotos', $event);
@@ -357,8 +371,9 @@ class EventController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($event, $data, $media, $existingCaptions) {
+            DB::transaction(function () use ($event, $data, $media, $existingCaptions, $questions) {
                 $event->update($data);
+                app(EventQuestionService::class)->sync($event, $questions);
                 app(EventMediaService::class)->addMany($event, $media);
                 if (is_array($existingCaptions) && $existingCaptions !== []) {
                     app(EventMediaService::class)->updateCaptions($event, $existingCaptions);
@@ -398,7 +413,7 @@ class EventController extends Controller
     {
         Gate::authorize('viewRegistrants', $event);
 
-        $allRegistrations = $event->registrations()->with('user')->latest()->get();
+        $allRegistrations = $event->registrations()->with('user', 'answers')->latest()->get();
         $type = $request->query('type', 'all');
         $status = $request->query('status', 'all');
 
@@ -434,7 +449,7 @@ class EventController extends Controller
         $status = $request->query('status', 'all');
 
         $registrations = $event->registrations()
-            ->with('user')
+            ->with('user', 'answers')
             ->when($type !== 'all', fn (Builder $q) => $q->where('type', $type))
             ->when($status !== 'all', fn (Builder $q) => $q->where('status', $status))
             ->orderBy('created_at')
@@ -442,7 +457,12 @@ class EventController extends Controller
 
         $filename = 'laporan-pendaftar-'.$event->slug.'.csv';
 
-        return response()->streamDownload(function () use ($event, $registrations) {
+        // Kolom tambahan dari pertanyaan pendaftaran: urutan pertanyaan saat ini, lalu label lama yang sudah dihapus.
+        $answerLabels = $event->questions()->pluck('label')
+            ->merge($registrations->flatMap(fn (Registration $r) => $r->answers->pluck('label')))
+            ->unique()->values()->all();
+
+        return response()->streamDownload(function () use ($event, $registrations, $answerLabels) {
             $out = fopen('php://output', 'w');
             // UTF-8 BOM agar terbaca rapi di Excel / Spreadsheet
             fwrite($out, "\xEF\xBB\xBF");
@@ -454,10 +474,11 @@ class EventController extends Controller
                 fputcsv($out, ['Catatan Laporan Kegiatan', $event->reportSummary()]);
             }
             fputcsv($out, []);
-            fputcsv($out, ['No', 'Nama Pendaftar', 'Email', 'Peran Partisipasi', 'Status Pendaftaran', 'Catatan', 'Tanggal Daftar']);
+            fputcsv($out, array_merge(['No', 'Nama Pendaftar', 'Email', 'Peran Partisipasi', 'Status Pendaftaran', 'Catatan', 'Tanggal Daftar'], $answerLabels));
 
             foreach ($registrations as $idx => $r) {
-                fputcsv($out, [
+                $answers = $r->answers->mapWithKeys(fn ($a) => [$a->label => $a->value ?? ''])->all();
+                fputcsv($out, array_merge([
                     $idx + 1,
                     $r->user?->name ?? '-',
                     $r->user?->email ?? '-',
@@ -465,7 +486,7 @@ class EventController extends Controller
                     $r->status === 'confirmed' ? 'Terkonfirmasi' : 'Dibatalkan',
                     $r->note ?? '',
                     $r->created_at?->format('Y-m-d H:i:s') ?? '',
-                ]);
+                ], array_map(fn ($label) => $answers[$label] ?? '', $answerLabels)));
             }
             fclose($out);
         }, $filename, [

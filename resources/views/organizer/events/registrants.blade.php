@@ -60,17 +60,29 @@
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
             <table class="min-w-full text-sm">
-                <thead class="bg-gray-50 text-left text-gray-600"><tr><th class="p-3">Nama</th><th class="p-3">Email</th><th class="p-3">Sebagai</th><th class="p-3">Status</th><th class="p-3">Catatan</th><th class="p-3">Tanggal Daftar</th></tr></thead>
+                <thead class="bg-gray-50 text-left text-gray-600"><tr><th class="p-3">Nama</th><th class="p-3">Email</th><th class="p-3">Sebagai</th><th class="p-3">Status</th><th class="p-3">Catatan</th><th class="p-3">Data Pendaftaran</th><th class="p-3">Tanggal Daftar</th></tr></thead>
                 <tbody>
                 @forelse ($registrations as $r)
                     <tr class="border-t">
                         <td class="p-3">{{ $r->user->name }}</td><td class="p-3">{{ $r->user->email }}</td>
                         <td class="p-3">{{ \App\Models\Registration::TYPES[$r->type] }}</td>
                         <td class="p-3 {{ $r->status === 'confirmed' ? 'text-green-700' : 'text-red-600' }}">{{ $r->status === 'confirmed' ? 'Terkonfirmasi' : 'Dibatalkan' }}</td>
-                        <td class="p-3">{{ $r->note }}</td><td class="p-3">{{ $r->created_at->format('d M Y H:i') }}</td>
+                        <td class="p-3">{{ $r->note }}</td>
+                        <td class="p-3 align-top min-w-[14rem]">
+                            @if ($r->answers->isNotEmpty())
+                                <dl class="space-y-0.5">
+                                    @foreach ($r->answers as $a)
+                                        <div class="flex gap-1.5"><dt class="text-gray-500 shrink-0">{{ $a->label }}:</dt><dd class="font-medium text-gray-800 break-words">{{ $a->value ?? '-' }}</dd></div>
+                                    @endforeach
+                                </dl>
+                            @else
+                                <span class="text-gray-400">-</span>
+                            @endif
+                        </td>
+                        <td class="p-3 whitespace-nowrap">{{ $r->created_at->format('d M Y H:i') }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="6" class="p-6 text-center text-gray-500">Belum ada pendaftar.</td></tr>
+                    <tr><td colspan="7" class="p-6 text-center text-gray-500">Belum ada pendaftar.</td></tr>
                 @endforelse
                 </tbody>
             </table>
