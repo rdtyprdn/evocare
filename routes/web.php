@@ -21,20 +21,23 @@ Route::get('/kegiatan/{event}', [EventController::class, 'show'])->name('events.
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
-    Route::get('/kegiatan/{event}/daftar', [RegistrationController::class, 'create'])->name('registrations.create');
-    Route::post('/kegiatan/{event}/daftar', [RegistrationController::class, 'store'])->name('registrations.store');
+    // Mendaftar kegiatan dan mengajukan organisasi butuh email yang sudah diverifikasi.
+    Route::middleware('verified')->group(function () {
+        Route::get('/kegiatan/{event}/daftar', [RegistrationController::class, 'create'])->name('registrations.create');
+        Route::post('/kegiatan/{event}/daftar', [RegistrationController::class, 'store'])->name('registrations.store');
+        Route::get('/penyelenggara/daftar', [OrganizationController::class, 'create'])->name('organizations.create');
+        Route::post('/penyelenggara/daftar', [OrganizationController::class, 'store'])->name('organizations.store');
+    });
     Route::get('/pendaftaran-saya', [RegistrationController::class, 'index'])->name('registrations.index');
     Route::get('/pendaftaran-saya/{registration}/tiket', [RegistrationController::class, 'ticket'])->name('registrations.ticket');
     Route::delete('/pendaftaran/{registration}', [RegistrationController::class, 'destroy'])->name('registrations.destroy');
-
-    Route::get('/penyelenggara/daftar', [OrganizationController::class, 'create'])->name('organizations.create');
-    Route::post('/penyelenggara/daftar', [OrganizationController::class, 'store'])->name('organizations.store');
 
     // Akses per kegiatan diatur oleh EventPolicy; pembuatan kegiatan butuh organisasi terverifikasi.
     Route::prefix('penyelenggara')->name('organizer.')->group(function () {
         Route::get('jadwal', [OrganizerEventController::class, 'schedule'])->name('schedule');
         Route::get('laporan', [OrganizerEventController::class, 'reports'])->name('reports');
-        Route::resource('events', OrganizerEventController::class)->except('show');
+        Route::resource('events', OrganizerEventController::class)->except('show')
+            ->middlewareFor(['create', 'store'], 'verified');
         Route::post('events/{event}/galeri', [EventPhotoController::class, 'store'])->name('events.photos.store');
         Route::delete('events/{event}/galeri/{photo}', [EventPhotoController::class, 'destroy'])->scopeBindings()->name('events.photos.destroy');
         Route::get('events/{event}/pendaftar', [OrganizerEventController::class, 'registrants'])->name('events.registrants');

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Notifications\WelcomeVerifyEmail;
 use App\Support\SafeRedirect;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -46,10 +45,10 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        event(new Registered($user));
+        // Listener bawaan Registered mengirim email selamat datang berisi tautan verifikasi.
         // Kegagalan kirim email tidak boleh menggagalkan pembuatan akun.
         try {
-            $user->notify(new WelcomeVerifyEmail);
+            event(new Registered($user->markAsNewlyRegistered()));
         } catch (\Throwable $e) {
             report($e);
         }

@@ -3,7 +3,8 @@
 EvoCare adalah platform SaaS berbasis **Laravel** untuk mengelola dan menemukan kegiatan pengabdian masyarakat. Cara kerjanya mirip Eventbrite, tetapi khusus kegiatan sosial seperti pendidikan, kesehatan, lingkungan, pemberdayaan ekonomi, dan tanggap bencana. Dokumen ini adalah catatan teknis yang lebih rinci. Panduan instalasi singkat ada di `README.md`.
 
 ## Fitur
-- **Autentikasi** dengan Laravel Breeze dan Blade: daftar, masuk, reset kata sandi, dan profil dengan foto avatar. Email selamat datang berisi tautan verifikasi, tetapi verifikasi belum diwajibkan.
+- **Autentikasi** dengan Laravel Breeze dan Blade: daftar, masuk, reset kata sandi, dan profil dengan foto avatar. Email selamat datang berisi tautan verifikasi, dan email wajib diverifikasi sebelum mendaftar kegiatan, mengajukan organisasi, atau membuat kegiatan.
+- **Email** lewat Resend (API HTTPS) atau dicatat ke log, dikirim lewat antrian: verifikasi email, atur ulang kata sandi, konfirmasi dan pembatalan pendaftaran kegiatan, serta hasil verifikasi organisasi. Semua isi email berbahasa Indonesia.
 - **Tiga peran**: `admin`, `organizer` untuk penyelenggara seperti LSM, komunitas, atau institusi, dan `user` untuk masyarakat umum.
 - **Beranda**: daftar kegiatan dengan pencarian kata kunci, filter kategori, kota dengan saran otomatis, dan rentang tanggal.
 - **Detail kegiatan**: info penyelenggara dengan lencana terverifikasi, jadwal, lokasi, sisa kuota, gambar sampul, dan galeri dokumentasi foto serta video beserta keterangannya.
@@ -92,12 +93,13 @@ Tes mencakup autentikasi, otorisasi peran dan policy, pencarian dan filter, pend
 - `app/Services`: RegistrationService untuk pendaftaran anti race condition, EventMediaService untuk aturan unggah media, EventQuestionService untuk pertanyaan pendaftaran
 - `app/Http/Controllers`: EventController publik, RegistrationController, Organizer/EventController, Organizer/EventPhotoController, OrganizationController, dan controller admin
 - `app/Policies`: EventPolicy dan RegistrationPolicy
+- `app/Notifications`: email berbahasa Indonesia (verifikasi, atur ulang kata sandi, pendaftaran kegiatan, hasil verifikasi organisasi), semuanya lewat antrian
 - `app/Http/Middleware/EnsureRole.php`: middleware `role:...`
 - `app/Console/Commands`: `evocare:detach-org` dan `evocare:prune-files` untuk membersihkan file yang tidak lagi dipakai
 - `resources/views`: tampilan Blade dan Tailwind dalam Bahasa Indonesia
 
 ## Pengembangan Berikutnya
-- Hosting tetap dengan domain, HTTPS, dan pengiriman email sungguhan. Saat ini email masih dicatat ke `storage/logs/laravel.log`.
+- Hosting tetap dengan domain dan HTTPS, serta domain terverifikasi di Resend supaya email bisa dikirim ke semua pengguna.
 - Multi-tenant penuh: subdomain per organisasi dan paket langganan.
 - REST API dengan Laravel Sanctum agar data bisa dipakai aplikasi mobile.
 - Pencarian berbasis peta dan jarak, serta rekomendasi sesuai minat.

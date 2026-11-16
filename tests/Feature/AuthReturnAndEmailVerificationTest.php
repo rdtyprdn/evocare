@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Event;
 use App\Models\User;
+use App\Notifications\VerifyEmailNotification as VerifyEmail;
 use App\Notifications\WelcomeVerifyEmail;
-use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Contracts\Notifications\Dispatcher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;

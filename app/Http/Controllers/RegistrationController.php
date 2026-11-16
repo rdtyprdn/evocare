@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use App\Models\EventQuestion;
 use App\Models\Registration;
+use App\Notifications\RegistrationCancelled;
+use App\Notifications\RegistrationConfirmed;
 use App\Services\RegistrationService;
+use App\Support\SafeNotify;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -22,7 +25,6 @@ class RegistrationController extends Controller
 
         return view('registrations.index', compact('registrations'));
     }
-
 
     public function create(Request $request, Event $event)
     {
@@ -84,16 +86,17 @@ class RegistrationController extends Controller
         ])->all();
 
         try {
-            $service->register($request->user(), $event, $data['type'], $data['note'] ?? null, $answers);
+            $registration = $service->register($request->user(), $event, $data['type'], $data['note'] ?? null, $answers);
         } catch (RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         } catch (LockTimeoutException) {
             return back()->with('error', 'Server sedang sibuk, silakan coba lagi.');
         }
 
+        SafeNotify::send($request->user(), new RegistrationConfirmed($registration));
+
         return redirect()->route('registrations.index')->with('success', 'Pendaftaran berhasil! Sampai jumpa di kegiatan "'.$event->title.'".');
     }
-
 
     public function ticket(Request $request, Registration $registration)
     {
@@ -109,7 +112,12 @@ class RegistrationController extends Controller
     public function destroy(Request $request, Registration $registration)
     {
         Gate::authorize('cancel', $registration);
+        $wasConfirmed = $registration->status === 'confirmed';
         $registration->update(['status' => 'cancelled']);
+
+        if ($wasConfirmed) {
+            SafeNotify::send($registration->user, new RegistrationCancelled($registration));
+        }
 
         return back()->with('success', 'Pendaftaran dibatalkan.');
     }

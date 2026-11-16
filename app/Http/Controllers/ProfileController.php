@@ -38,7 +38,11 @@ class ProfileController extends Controller
         $request->user()->save();
 
         if ($emailChanged) {
-            $request->user()->sendEmailVerificationNotification();
+            try {
+                $request->user()->sendEmailVerificationNotification();
+            } catch (\Throwable $e) {
+                report($e);
+            }
 
             return Redirect::route('profile.edit')->with('status', 'email-verification-sent');
         }

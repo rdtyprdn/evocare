@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
+use App\Notifications\ResetPasswordNotification as ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -53,7 +53,7 @@ class LocalizationTest extends TestCase
         Notification::assertSentTo($user, ResetPassword::class, function ($n) use ($user) {
             $mail = $n->toMail($user);
 
-            return $mail->subject === 'Atur ulang kata sandi Anda' && $mail->actionText === 'Atur Ulang Kata Sandi';
+            return $mail->subject === 'Atur ulang kata sandi EvoCare' && $mail->actionText === 'Atur Ulang Kata Sandi';
         });
     }
 }

@@ -63,10 +63,38 @@ Lalu buka http://localhost:8000 di browser.
 ## Catatan
 
 - Database di tiap laptop terpisah, jadi akun dan kegiatan yang dibuat di satu laptop tidak muncul di laptop lain.
-- Email belum benar-benar dikirim. Isinya dicatat di `storage/logs/laravel.log`.
+- Secara bawaan (`MAIL_MAILER=log`) email tidak benar-benar dikirim. Isinya dicatat di `storage/logs/laravel.log`. Cara mengirim email sungguhan ada di bagian "Email sungguhan dengan Resend" di bawah.
 - Jangan commit file `.env` ke repo.
 - Untuk menjalankan tes: `php artisan test`. Tes juga jalan otomatis di GitHub Actions setiap ada push ke `main`.
 - Jangan jalankan seeder demo di server publik, karena semua akun demo memakai kata sandi `password`.
+
+## Email sungguhan dengan Resend
+
+EvoCare mengirim email verifikasi, atur ulang kata sandi, konfirmasi dan pembatalan pendaftaran kegiatan, serta hasil verifikasi organisasi. Pengguna wajib memverifikasi email sebelum bisa mendaftar kegiatan, mengajukan organisasi, atau membuat kegiatan.
+
+1. Buat API key di dashboard Resend, lalu isi `.env`:
+
+   ```
+   MAIL_MAILER=resend
+   RESEND_API_KEY=isi_api_key_anda
+   MAIL_FROM_ADDRESS="onboarding@resend.dev"
+   ```
+
+   Alamat `onboarding@resend.dev` hanya bisa mengirim ke email pemilik akun Resend. Supaya bisa mengirim ke siapa saja, verifikasi domain di Resend dan ganti `MAIL_FROM_ADDRESS` dengan alamat dari domain itu.
+
+2. Pastikan `APP_URL` sama dengan alamat yang dibuka di browser, karena tautan di email dibuat dari nilai ini.
+
+3. Email dikirim lewat antrian (`QUEUE_CONNECTION=database`). Jalankan worker di terminal terpisah:
+
+   ```bash
+   php artisan queue:work
+   ```
+
+   Atau jalankan `composer run dev`, yang sudah menjalankan server, Vite, dan antrian sekaligus. Kalau tidak mau menjalankan worker, set `QUEUE_CONNECTION=sync` supaya email dikirim langsung.
+
+4. Setelah mengubah `.env`, jalankan `php artisan config:clear`. Kalau worker sedang jalan, restart dengan `php artisan queue:restart`.
+
+Email yang gagal dikirim dicoba ulang tiga kali, lalu dicatat di tabel `failed_jobs`. Lihat dengan `php artisan queue:failed` dan kirim ulang dengan `php artisan queue:retry all`.
 
 ## Panduan lengkap Windows (laptop baru)
 

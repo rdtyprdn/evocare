@@ -39,5 +39,14 @@ class AppServiceProvider extends ServiceProvider
                         ->withErrors(['email' => $message]);
                 }));
         }
+
+        // Kirim ulang email verifikasi dibatasi per akun agar kuota layanan email tidak habis.
+        RateLimiter::for('verification-send', fn (Request $request) => Limit::perMinute(2)
+            ->by('verification-send|'.($request->user()?->id ?: $request->ip()))
+            ->response(function (Request $request, array $headers) {
+                $seconds = (int) ($headers['Retry-After'] ?? 60);
+
+                return back()->withErrors(['email' => "Tunggu {$seconds} detik sebelum meminta email verifikasi lagi."]);
+            }));
     }
 }

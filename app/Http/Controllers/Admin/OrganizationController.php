@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Organization;
+use App\Notifications\OrganizationReviewed;
+use App\Support\SafeNotify;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -39,6 +41,10 @@ class OrganizationController extends Controller
             }
         });
 
+        if ($owner = $organization->owner) {
+            SafeNotify::send($owner, new OrganizationReviewed($organization->fresh()));
+        }
+
         return back()->with('success', "Organisasi \"{$organization->name}\" terverifikasi.");
     }
 
@@ -46,6 +52,10 @@ class OrganizationController extends Controller
     {
         $data = $request->validate(['admin_note' => ['required', 'string', 'max:1000']], [], ['admin_note' => 'alasan penolakan']);
         $organization->update(['status' => 'rejected', 'verified_at' => null, 'admin_note' => $data['admin_note']]);
+
+        if ($owner = $organization->owner) {
+            SafeNotify::send($owner, new OrganizationReviewed($organization));
+        }
 
         return back()->with('success', "Organisasi \"{$organization->name}\" ditolak.");
     }
