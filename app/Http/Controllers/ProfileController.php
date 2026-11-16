@@ -6,6 +6,7 @@ use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -58,11 +59,17 @@ class ProfileController extends Controller
 
         Auth::logout();
 
-        if ($user->avatar_path) {
-            Storage::disk('public')->delete($user->avatar_path);
-        }
+        $avatar = $user->avatar_path;
 
-        $user->delete();
+        // Kegiatan dihapus lewat Eloquent (bukan cascade database) agar file sampul dan galerinya ikut terhapus.
+        DB::transaction(function () use ($user) {
+            $user->events()->get()->each->delete();
+            $user->delete();
+        });
+
+        if ($avatar) {
+            Storage::disk('public')->delete($avatar);
+        }
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

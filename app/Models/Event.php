@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
@@ -26,6 +27,9 @@ class Event extends Model
         'city', 'location', 'start_at', 'end_at', 'quota', 'image_url', 'image_path', 'status',
         'report_summary', 'report_updated_at',
     ];
+
+    /** File yang dihapus dari storage setelah kegiatan terhapus dari database. */
+    protected array $filesToPurge = [];
 
     protected function casts(): array
     {
@@ -191,5 +195,36 @@ class Event extends Model
             ->when($f['city'] ?? null, fn ($q, $c) => $q->where('city', $c))
             ->when($f['from'] ?? null, fn ($q, $d) => $q->where('start_at', '>=', Carbon::parse($d)->startOfDay()))
             ->when($f['to'] ?? null, fn ($q, $d) => $q->where('start_at', '<=', Carbon::parse($d)->endOfDay()));
+    }
+
+    /** Path sampul dan media galeri yang tersimpan di disk public. */
+    public function storedFilePaths(): array
+    {
+        return collect([$this->image_path])
+            ->merge($this->photos()->whereNotNull('path')->pluck('path'))
+            ->filter()->unique()->values()->all();
+    }
+
+    /**
+     * Baris event_photos ikut terhapus lewat cascade database, sehingga hook EventPhoto
+     * tidak jalan. File sampul, galeri, dan laporan dihapus di sini setelah commit.
+     */
+    protected static function booted(): void
+    {
+        static::deleting(function (Event $event) {
+            $event->filesToPurge = $event->storedFilePaths();
+        });
+
+        static::deleted(function (Event $event) {
+            $files = $event->filesToPurge;
+            $id = $event->id;
+            DB::afterCommit(function () use ($files, $id) {
+                $disk = Storage::disk('public');
+                $disk->delete($files);
+                $disk->deleteDirectory("event-photos/{$id}");
+                $disk->deleteDirectory("event-videos/{$id}");
+                Storage::disk('local')->delete("reports/event-{$id}.json");
+            });
+        });
     }
 }

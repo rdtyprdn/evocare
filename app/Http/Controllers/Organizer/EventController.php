@@ -400,11 +400,7 @@ class EventController extends Controller
     public function destroy(Event $event)
     {
         Gate::authorize('delete', $event);
-        $path = $event->image_path;
-        $event->delete();
-        if ($path) {
-            Storage::disk('public')->delete($path);
-        }
+        $event->delete(); // file sampul dan galeri dihapus oleh hook di model Event
 
         return redirect()->route('organizer.events.index')->with('success', 'Kegiatan dihapus.');
     }
