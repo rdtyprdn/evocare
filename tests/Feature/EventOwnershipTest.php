@@ -86,4 +86,23 @@ class EventOwnershipTest extends TestCase
         $as->delete(route('organizer.events.destroy', $e))->assertRedirect();
         $this->assertModelMissing($e);
     }
+
+    public function test_description_is_limited_to_5000_characters(): void
+    {
+        $as = $this->actingAs($this->ownerA);
+
+        $as->put(route('organizer.events.update', $this->event), ['description' => str_repeat('a', 5001)] + $this->payload())
+            ->assertSessionHasErrors(['description' => 'Deskripsi tidak boleh lebih dari 5000 karakter.']);
+        $this->assertNotSame(5001, mb_strlen($this->event->fresh()->description));
+
+        $as->post(route('organizer.events.store'), ['title' => 'Kegiatan Baru', 'description' => str_repeat('b', 5001)] + $this->payload())
+            ->assertSessionHasErrors('description');
+        $this->assertSame(0, Event::where('title', 'Kegiatan Baru')->count());
+
+        $as->put(route('organizer.events.update', $this->event), ['description' => str_repeat('é', 5000)] + $this->payload())
+            ->assertSessionHasNoErrors();
+        $this->assertSame(5000, mb_strlen($this->event->fresh()->description));
+
+        $as->get(route('organizer.events.edit', $this->event))->assertSee('maxlength="5000"', false);
+    }
 }

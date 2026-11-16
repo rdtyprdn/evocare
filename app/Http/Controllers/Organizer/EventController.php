@@ -496,7 +496,7 @@ class EventController extends Controller
         $data = $request->validate([
             'title' => ['required', 'string', 'max:150'],
             'category_id' => ['required', 'exists:categories,id'],
-            'description' => ['required', 'string'],
+            'description' => ['required', 'string', 'max:5000'],
             'city' => ['required', 'string', 'max:80'],
             'location' => ['required', 'string', 'max:200'],
             'start_at' => ['required', 'date'],

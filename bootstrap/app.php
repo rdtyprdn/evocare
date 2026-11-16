@@ -16,8 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias(['role' => EnsureRole::class]);
-        // Percayai proxy (Cloudflare Tunnel) agar URL HTTPS terbaca benar.
-        $middleware->trustProxies(at: '*');
+        // Proxy yang dipercaya (mis. Cloudflare Tunnel) diatur di config/trustedproxy.php lewat TRUSTED_PROXIES.
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Tamu yang mencoba mendaftar kegiatan (POST) dikembalikan ke detail kegiatan setelah login.

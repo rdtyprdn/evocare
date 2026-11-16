@@ -42,9 +42,9 @@ class EventPolicy
         return $this->update($user, $event);
     }
 
-    /** Galeri dokumentasi hanya dikelola oleh penyelenggara pemilik kegiatan. */
+    /** Galeri dokumentasi dikelola oleh penyelenggara pemilik kegiatan, atau admin untuk moderasi. */
     public function managePhotos(User $user, Event $event): bool
     {
-        return $this->owns($user, $event);
+        return $this->update($user, $event);
     }
 }

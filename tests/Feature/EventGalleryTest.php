@@ -126,4 +126,25 @@ class EventGalleryTest extends TestCase
         $this->event->delete();
         $this->assertSame(0, EventPhoto::count());
     }
+
+    public function test_admin_can_add_and_delete_gallery_photos_of_any_event(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->upload($admin, [UploadedFile::fake()->image('a.jpg')])->assertSessionHasNoErrors()->assertRedirect();
+        $photo = EventPhoto::firstOrFail();
+        Storage::disk('public')->assertExists($photo->path);
+
+        $this->actingAs($admin)->delete(route('organizer.events.photos.destroy', [$this->event, $photo]))->assertRedirect();
+        $this->assertModelMissing($photo);
+        Storage::disk('public')->assertMissing($photo->path);
+    }
+
+    public function test_admin_sees_gallery_manager_on_edit_page(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)->get(route('organizer.events.edit', $this->event))->assertOk()
+            ->assertSee('name="photos[]"', false);
+    }
 }

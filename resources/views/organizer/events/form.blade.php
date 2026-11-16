@@ -31,7 +31,8 @@
             </div>
             <div>
                 <x-input-label for="description" value="Deskripsi" />
-                <textarea id="description" name="description" rows="5" class="mt-1 w-full rounded-md border-gray-300" required>{{ old('description', $event->description) }}</textarea>
+                <textarea id="description" name="description" rows="5" maxlength="5000" class="mt-1 w-full rounded-md border-gray-300" required>{{ old('description', $event->description) }}</textarea>
+                <p class="mt-1 text-xs text-gray-500">Maksimal 5.000 karakter.</p>
                 <x-input-error :messages="$errors->get('description')" class="mt-1" />
             </div>
             <div class="grid sm:grid-cols-2 gap-4">
