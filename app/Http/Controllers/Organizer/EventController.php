@@ -8,6 +8,7 @@ use App\Models\Event;
 use App\Models\Registration;
 use App\Services\EventMediaService;
 use App\Services\EventQuestionService;
+use App\Support\CsvCell;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -462,19 +463,19 @@ class EventController extends Controller
             $out = fopen('php://output', 'w');
             // UTF-8 BOM agar terbaca rapi di Excel / Spreadsheet
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['Laporan Kegiatan', $event->title]);
-            fputcsv($out, ['Kota / Lokasi', $event->city.' - '.$event->location]);
-            fputcsv($out, ['Jadwal Pelaksanaan', $event->start_at?->format('d M Y H:i').' s.d. '.$event->end_at?->format('d M Y H:i')]);
-            fputcsv($out, ['Kuota Kegiatan', (string) $event->quota]);
+            fputcsv($out, CsvCell::row(['Laporan Kegiatan', $event->title]));
+            fputcsv($out, CsvCell::row(['Kota / Lokasi', $event->city.' - '.$event->location]));
+            fputcsv($out, CsvCell::row(['Jadwal Pelaksanaan', $event->start_at?->format('d M Y H:i').' s.d. '.$event->end_at?->format('d M Y H:i')]));
+            fputcsv($out, CsvCell::row(['Kuota Kegiatan', (string) $event->quota]));
             if (filled($event->reportSummary())) {
-                fputcsv($out, ['Catatan Laporan Kegiatan', $event->reportSummary()]);
+                fputcsv($out, CsvCell::row(['Catatan Laporan Kegiatan', $event->reportSummary()]));
             }
             fputcsv($out, []);
-            fputcsv($out, array_merge(['No', 'Nama Pendaftar', 'Email', 'Peran Partisipasi', 'Status Pendaftaran', 'Catatan', 'Tanggal Daftar'], $answerLabels));
+            fputcsv($out, CsvCell::row(array_merge(['No', 'Nama Pendaftar', 'Email', 'Peran Partisipasi', 'Status Pendaftaran', 'Catatan', 'Tanggal Daftar'], $answerLabels)));
 
             foreach ($registrations as $idx => $r) {
                 $answers = $r->answers->mapWithKeys(fn ($a) => [$a->label => $a->value ?? ''])->all();
-                fputcsv($out, array_merge([
+                fputcsv($out, CsvCell::row(array_merge([
                     $idx + 1,
                     $r->user?->name ?? '-',
                     $r->user?->email ?? '-',
@@ -482,7 +483,7 @@ class EventController extends Controller
                     $r->status === 'confirmed' ? 'Terkonfirmasi' : 'Dibatalkan',
                     $r->note ?? '',
                     $r->created_at?->format('Y-m-d H:i:s') ?? '',
-                ], array_map(fn ($label) => $answers[$label] ?? '', $answerLabels)));
+                ], array_map(fn ($label) => $answers[$label] ?? '', $answerLabels))));
             }
             fclose($out);
         }, $filename, [
