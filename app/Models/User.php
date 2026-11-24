@@ -4,9 +4,8 @@ namespace App\Models;
 
 use App\Notifications\ResetPasswordNotification;
 use App\Notifications\VerifyEmailNotification;
-use App\Notifications\WelcomeVerifyEmail;
+use App\Notifications\WelcomeEmail;
 use Database\Factories\UserFactory;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,7 +14,7 @@ use Illuminate\Notifications\Notifiable;
 
 #[Fillable(['name', 'email', 'password', 'role', 'organization_id', 'avatar_path'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -26,22 +25,14 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $attributes = ['role' => 'user'];
 
-    /** Akun yang baru mendaftar menerima email selamat datang, bukan email verifikasi biasa. */
-    private bool $welcomeEmailPending = false;
-
-    public function markAsNewlyRegistered(): static
+    public function sendWelcomeNotification(): void
     {
-        $this->welcomeEmailPending = true;
-
-        return $this;
+        $this->notify(new WelcomeEmail);
     }
 
     public function sendEmailVerificationNotification(): void
     {
-        $notification = $this->welcomeEmailPending ? new WelcomeVerifyEmail : new VerifyEmailNotification;
-        $this->welcomeEmailPending = false;
-
-        $this->notify($notification);
+        $this->notify(new VerifyEmailNotification);
     }
 
     public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void

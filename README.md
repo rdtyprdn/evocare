@@ -70,7 +70,7 @@ Lalu buka http://localhost:8000 di browser.
 
 ## Email sungguhan dengan Resend
 
-EvoCare mengirim email verifikasi, atur ulang kata sandi, konfirmasi dan pembatalan pendaftaran kegiatan, serta hasil verifikasi organisasi. Pengguna wajib memverifikasi email sebelum bisa mendaftar kegiatan, mengajukan organisasi, atau membuat kegiatan.
+EvoCare mengirim email selamat datang, atur ulang kata sandi, konfirmasi dan pembatalan pendaftaran kegiatan, serta hasil verifikasi organisasi. Setelah membuat akun, pengguna bisa langsung mendaftar kegiatan, mengajukan organisasi, atau membuat kegiatan tanpa harus memverifikasi email.
 
 1. Buat API key di dashboard Resend, lalu isi `.env`:
 

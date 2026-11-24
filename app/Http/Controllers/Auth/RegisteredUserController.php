@@ -45,10 +45,10 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        // Listener bawaan Registered mengirim email selamat datang berisi tautan verifikasi.
-        // Kegagalan kirim email tidak boleh menggagalkan pembuatan akun.
+        // Kirim email selamat datang. Kegagalan kirim email tidak boleh menggagalkan pembuatan akun.
         try {
-            event(new Registered($user->markAsNewlyRegistered()));
+            event(new Registered($user));
+            $user->sendWelcomeNotification();
         } catch (\Throwable $e) {
             report($e);
         }

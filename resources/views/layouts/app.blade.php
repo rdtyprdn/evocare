@@ -21,12 +21,6 @@
 
             <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
                 @auth
-                    @unless (Auth::user()->hasVerifiedEmail())
-                        <div class="mt-4 flex items-start gap-2 rounded-md bg-orange-50 border border-orange-200 p-3 text-orange-800 text-sm">
-                            <svg class="mt-0.5 h-4 w-4 shrink-0 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0-9.75 6.75L2.25 6.75" /></svg>
-                            <span>Email Anda belum diverifikasi. Verifikasi dulu agar bisa mendaftar kegiatan dan mengajukan organisasi. <a href="{{ route('verification.notice') }}" class="underline font-medium">Kirim ulang email verifikasi</a></span>
-                        </div>
-                    @endunless
                     @php $myOrg = Auth::user()->organization; @endphp
                     @if ($myOrg && $myOrg->owner_id === Auth::id() && $myOrg->status === 'pending')
                         <div class="mt-4 rounded-md bg-amber-50 border border-amber-200 p-3 text-amber-800 text-sm">

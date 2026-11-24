@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Models\Event;
 use App\Models\User;
 use App\Notifications\VerifyEmailNotification as VerifyEmail;
-use App\Notifications\WelcomeVerifyEmail;
+use App\Notifications\WelcomeEmail;
 use Illuminate\Contracts\Notifications\Dispatcher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -68,16 +68,19 @@ class AuthReturnAndEmailVerificationTest extends TestCase
         }
     }
 
-    public function test_changing_email_sends_verification_email(): void
+    public function test_changing_email_does_not_send_verification_email(): void
     {
         Notification::fake();
         $user = User::factory()->create();
         $this->actingAs($user)->patch(route('profile.update'), ['name' => $user->name, 'email' => 'baru@contoh.test'])
-            ->assertSessionHasNoErrors()->assertRedirect(route('profile.edit'))->assertSessionHas('status', 'email-verification-sent');
+            ->assertSessionHasNoErrors()->assertRedirect(route('profile.edit'))->assertSessionHas('status', 'profile-updated');
+        $this->assertSame('baru@contoh.test', $user->fresh()->email);
         $this->assertNull($user->fresh()->email_verified_at);
-        Notification::assertSentTo($user->fresh(), VerifyEmail::class);
+        Notification::assertNothingSent();
 
-        $this->actingAs($user->fresh())->get(route('profile.edit'))->assertSee('Tautan verifikasi telah dikirim ke alamat email baru Anda');
+        $this->actingAs($user->fresh())->get(route('profile.edit'))
+            ->assertDontSee('Tautan verifikasi telah dikirim ke alamat email baru Anda')
+            ->assertDontSee('Alamat email Anda belum diverifikasi');
     }
 
     public function test_same_email_does_not_send_verification(): void
@@ -97,21 +100,21 @@ class AuthReturnAndEmailVerificationTest extends TestCase
         $this->assertNotNull($user->fresh()->email_verified_at);
     }
 
-    public function test_registration_sends_indonesian_welcome_email_with_verification_link(): void
+    public function test_registration_sends_indonesian_welcome_email_without_verification_link(): void
     {
         Notification::fake();
         $this->post(route('register'), ['name' => 'Sari', 'email' => 'sari@contoh.test', 'password' => 'password123', 'password_confirmation' => 'password123'])
             ->assertRedirect();
         $user = User::where('email', 'sari@contoh.test')->firstOrFail();
-        Notification::assertSentToTimes($user, WelcomeVerifyEmail::class, 1);
+        Notification::assertSentToTimes($user, WelcomeEmail::class, 1);
         Notification::assertNotSentTo($user, VerifyEmail::class);
-        Notification::assertSentTo($user, WelcomeVerifyEmail::class, function ($n) use ($user) {
+        Notification::assertSentTo($user, WelcomeEmail::class, function ($n) use ($user) {
             $mail = $n->toMail($user);
-            $this->assertSame('Selamat datang di EvoCare, verifikasi email Anda', $mail->subject);
-            $this->assertSame('Verifikasi Email', $mail->actionText);
-            $this->assertStringContainsString('/verify-email/'.$user->id.'/', $mail->actionUrl);
-            $this->actingAs($user)->get($mail->actionUrl)->assertRedirect();
-            $this->assertNotNull($user->fresh()->email_verified_at);
+            $this->assertSame('Selamat datang di EvoCare', $mail->subject);
+            $this->assertNull($mail->actionText);
+            $this->assertNull($mail->actionUrl);
+            $this->assertStringNotContainsString('verifikasi', mb_strtolower($mail->subject.' '.implode(' ', $mail->introLines)));
+            $this->assertNull($user->fresh()->email_verified_at);
 
             return true;
         });

@@ -30,22 +30,11 @@ class ProfileController extends Controller
     {
         $request->user()->fill($request->validated());
 
-        $emailChanged = $request->user()->isDirty('email');
-        if ($emailChanged) {
+        if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;
         }
 
         $request->user()->save();
-
-        if ($emailChanged) {
-            try {
-                $request->user()->sendEmailVerificationNotification();
-            } catch (\Throwable $e) {
-                report($e);
-            }
-
-            return Redirect::route('profile.edit')->with('status', 'email-verification-sent');
-        }
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }

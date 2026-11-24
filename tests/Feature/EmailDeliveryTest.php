@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Category;
 use App\Models\Event;
 use App\Models\Organization;
 use App\Models\Registration;
@@ -11,7 +12,7 @@ use App\Notifications\RegistrationCancelled;
 use App\Notifications\RegistrationConfirmed;
 use App\Notifications\ResetPasswordNotification;
 use App\Notifications\VerifyEmailNotification;
-use App\Notifications\WelcomeVerifyEmail;
+use App\Notifications\WelcomeEmail;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Transport\ResendTransport;
@@ -30,35 +31,61 @@ class EmailDeliveryTest extends TestCase
         return Event::factory()->create(['status' => 'published', 'start_at' => now()->addDays(3), 'end_at' => now()->addDays(3)->addHours(2)]);
     }
 
-    // ---------- Verifikasi email wajib ----------
+    // ---------- Pengguna bisa langsung memakai fitur tanpa verifikasi email ----------
 
-    public function test_unverified_user_cannot_register_for_event(): void
+    public function test_unverified_user_can_register_for_event(): void
     {
+        Notification::fake();
         $event = $this->event();
         $user = User::factory()->unverified()->create();
 
-        $this->actingAs($user)->get(route('registrations.create', $event))->assertRedirect(route('verification.notice'));
-        $this->actingAs($user)->post(route('registrations.store', $event), ['type' => 'relawan'])->assertRedirect(route('verification.notice'));
-        $this->assertDatabaseCount('registrations', 0);
+        $this->actingAs($user)->get(route('registrations.create', $event))->assertOk();
+        $this->actingAs($user)->post(route('registrations.store', $event), ['type' => 'relawan'])->assertRedirect(route('registrations.index'));
+        $this->assertDatabaseCount('registrations', 1);
     }
 
-    public function test_unverified_user_cannot_apply_organization_or_create_event(): void
+    public function test_unverified_user_can_apply_organization(): void
     {
         $user = User::factory()->unverified()->create();
 
-        $this->actingAs($user)->get(route('organizations.create'))->assertRedirect(route('verification.notice'));
-        $this->actingAs($user)->post(route('organizations.store'), ['name' => 'Komunitas Baru'])->assertRedirect(route('verification.notice'));
-        $this->actingAs($user)->get(route('organizer.events.create'))->assertRedirect(route('verification.notice'));
-        $this->actingAs($user)->post(route('organizer.events.store'), [])->assertRedirect(route('verification.notice'));
-        $this->assertDatabaseCount('organizations', 0);
+        $this->actingAs($user)->get(route('organizations.create'))->assertOk();
+        $this->actingAs($user)->post(route('organizations.store'), [
+            'name' => 'Komunitas Baru',
+            'type' => 'komunitas',
+            'city' => 'Denpasar',
+            'description' => 'Komunitas sosial.',
+            'contact' => 'komunitas@contoh.test',
+        ])->assertRedirect();
+        $this->assertDatabaseCount('organizations', 1);
+        $this->assertSame('pending', Organization::first()->status);
     }
 
-    public function test_unverified_user_can_still_browse_dashboard_and_profile(): void
+    public function test_unverified_organizer_can_create_event(): void
+    {
+        $organizer = User::factory()->unverified()->organizer()->create();
+        $category = Category::factory()->create();
+
+        $this->actingAs($organizer)->get(route('organizer.events.create'))->assertOk();
+        $this->actingAs($organizer)->post(route('organizer.events.store'), [
+            'title' => 'Aksi Bersih Pantai',
+            'category_id' => $category->id,
+            'description' => 'Membersihkan pantai bersama relawan.',
+            'city' => 'Denpasar',
+            'location' => 'Pantai Sanur',
+            'start_at' => now()->addDays(5)->format('Y-m-d H:i'),
+            'end_at' => now()->addDays(5)->addHours(2)->format('Y-m-d H:i'),
+            'quota' => 20,
+            'status' => 'published',
+        ])->assertRedirect(route('organizer.events.index'));
+        $this->assertDatabaseHas('events', ['title' => 'Aksi Bersih Pantai', 'user_id' => $organizer->id]);
+    }
+
+    public function test_unverified_user_can_browse_dashboard_and_profile_without_banner(): void
     {
         $user = User::factory()->unverified()->create();
 
-        $this->actingAs($user)->get(route('registrations.index'))->assertOk()->assertSee('Email Anda belum diverifikasi');
-        $this->actingAs($user)->get(route('profile.edit'))->assertOk();
+        $this->actingAs($user)->get(route('registrations.index'))->assertOk()->assertDontSee('Email Anda belum diverifikasi');
+        $this->actingAs($user)->get(route('profile.edit'))->assertOk()->assertDontSee('Alamat email Anda belum diverifikasi');
         $this->get(route('events.show', $this->event()))->assertOk();
     }
 
@@ -147,7 +174,7 @@ class EmailDeliveryTest extends TestCase
 
     public function test_all_email_notifications_are_queued(): void
     {
-        foreach ([WelcomeVerifyEmail::class, VerifyEmailNotification::class, ResetPasswordNotification::class,
+        foreach ([WelcomeEmail::class, VerifyEmailNotification::class, ResetPasswordNotification::class,
             RegistrationConfirmed::class, RegistrationCancelled::class, OrganizationReviewed::class] as $class) {
             $this->assertTrue(is_subclass_of($class, ShouldQueue::class), $class.' harus ShouldQueue');
         }
@@ -161,7 +188,7 @@ class EmailDeliveryTest extends TestCase
             ->assertRedirect();
 
         Queue::assertPushed(SendQueuedNotifications::class, 1);
-        Queue::assertPushed(SendQueuedNotifications::class, fn ($job) => $job->notification instanceof WelcomeVerifyEmail);
+        Queue::assertPushed(SendQueuedNotifications::class, fn ($job) => $job->notification instanceof WelcomeEmail);
         $this->assertNull(User::where('email', 'dewi@contoh.test')->first()->email_verified_at);
     }
 

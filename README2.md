@@ -3,8 +3,8 @@
 EvoCare adalah platform SaaS berbasis **Laravel** untuk mengelola dan menemukan kegiatan pengabdian masyarakat. Cara kerjanya mirip Eventbrite, tetapi khusus kegiatan sosial seperti pendidikan, kesehatan, lingkungan, pemberdayaan ekonomi, dan tanggap bencana. Dokumen ini adalah catatan teknis yang lebih rinci. Panduan instalasi singkat ada di `README.md`.
 
 ## Fitur
-- **Autentikasi** dengan Laravel Breeze dan Blade: daftar, masuk, reset kata sandi, dan profil dengan foto avatar. Email selamat datang berisi tautan verifikasi, dan email wajib diverifikasi sebelum mendaftar kegiatan, mengajukan organisasi, atau membuat kegiatan.
-- **Email** lewat Resend (API HTTPS) atau dicatat ke log, dikirim lewat antrian: verifikasi email, atur ulang kata sandi, konfirmasi dan pembatalan pendaftaran kegiatan, serta hasil verifikasi organisasi. Semua isi email berbahasa Indonesia.
+- **Autentikasi** dengan Laravel Breeze dan Blade: daftar, masuk, reset kata sandi, dan profil dengan foto avatar. Setelah mendaftar, pengguna menerima email selamat datang dan bisa langsung memakai semua fitur tanpa verifikasi email.
+- **Email** lewat Resend (API HTTPS) atau dicatat ke log, dikirim lewat antrian: selamat datang, atur ulang kata sandi, konfirmasi dan pembatalan pendaftaran kegiatan, serta hasil verifikasi organisasi. Semua isi email berbahasa Indonesia.
 - **Tiga peran**: `admin`, `organizer` untuk penyelenggara seperti LSM, komunitas, atau institusi, dan `user` untuk masyarakat umum.
 - **Beranda**: daftar kegiatan dengan pencarian kata kunci, filter kategori, kota dengan saran otomatis, dan rentang tanggal.
 - **Detail kegiatan**: info penyelenggara dengan lencana terverifikasi, jadwal, lokasi, sisa kuota, gambar sampul, dan galeri dokumentasi foto serta video beserta keterangannya.
